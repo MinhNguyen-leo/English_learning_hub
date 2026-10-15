@@ -1,0 +1,56 @@
+﻿.spreadsheet-panel {
+  padding: 24px;
+  margin: 20px 0;
+  border: 1px solid var(--control-border);
+  border-radius: 8px;
+  background: var(--surface-hover);
+}
+.spreadsheet-panel h2 {
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+.spreadsheet-panel h3 {
+  font-size: 1.125rem;
+  font-weight: 700;
+  margin-top: 24px;
+}
+.spreadsheet-panel p {
+  margin: 12px 0;
+}
+.spreadsheet-panel .toolbar {
+  margin-top: 16px;
+}
+.column-mapping {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr));
+  gap: 12px;
+  margin: 16px 0;
+}
+.column-mapping label,
+.upload-label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.column-mapping select {
+  min-width: 0;
+  max-width: 100%;
+}
+.invalid-consent {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 16px 0;
+}
+.spreadsheet-panel input[type='file'] {
+  max-width: 100%;
+}
+.spreadsheet-panel caption {
+  text-align: left;
+  padding: 12px;
+}
+@media (max-width: 600px) {
+  .spreadsheet-panel {
+    padding: 12px;
+  }
+}

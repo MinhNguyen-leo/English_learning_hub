@@ -1,0 +1,7 @@
+# Website background asset
+
+Asset: `frontend/src/assets/study-background.png`. Generated with the built-in imagegen tool using the user's storefront image as a visual style reference. Applied by `frontend/src/index.css` with a light readability overlay and mobile positioning. No runtime image-generation API was added.
+
+## Generation prompt
+
+Create a polished wide landscape 3D rendered website BACKGROUND ASSET only, 1536x1024 composition. Style reference: soft miniature isometric architectural scene, creamy rounded little boutique building on pale porcelain square pavement tiles, rounded corners, pale lavender-grey shadows, warm afternoon sunlight diagonally across the scene, realistic soft ambient occlusion, dreamy premium clay-render material, warm white and blush surfaces. Place a small abstract rounded building with a berry red and cream striped awning at the far RIGHT EDGE, a small cream bench near bottom right, a few beige miniature geometric blocks near upper left edge. Center and left 70 percent of composition should remain spacious uncluttered pale tiled ground, suitable as unobtrusive full-page background behind an English vocabulary learning app. Color harmony with ruby/berry red interface: cream, pale blush, muted lavender grey, delicate berry accents. Gentle softly blurred depth of field. No lettering anywhere, NO text, NO typography, NO logo, NO watermark, NO UI, NO buttons. This is original scenery inspired by a pastel miniature storefront photo style, not a screenshot reproduction.

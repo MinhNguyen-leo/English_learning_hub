@@ -1,0 +1,11 @@
+# Phase 3: guest vocabulary manager
+
+Implemented locally; cloud authentication and synchronization remain deferred.
+
+- UI: `frontend/src/features/vocabulary/VocabularyManager.tsx`. Edit a row inline, Tab through text cells, and explicitly Save or Cancel. Search covers all text fields; part-of-speech filtering and ascending/descending sorting include timestamps. The active draft remains visible when filters change.
+- Domain: `model.ts`. Word is required (200 characters maximum); at least one English or Vietnamese meaning is required (2,000 characters each). Part of speech allows 200; synonyms and antonyms allow 2,000 each; example and note allow 5,000 each. Empty optional fields are stored as empty strings. Input is trimmed and normalized to Unicode NFC. Separate entries may share a word with different meanings. Identical word/English/Vietnamese meaning triples are rejected after normalization and lowercasing.
+- Storage: `repository.ts`. `VocabularyRepository` separates UI from persistence. The Dexie adapter uses database `english-learning-hub-guest`, schema version 1, store `vocabulary`, UUID primary keys, and ISO UTC timestamps. There is no unique word index. Transactions validate duplicates and commit mutations atomically. Timestamp comparisons reject stale updates/deletes, including changes from another tab; Reload entries reads the latest committed state after the current draft is finished.
+- Editing protection: drafts remain on failed validation/storage operations; switching rows, adding another row, or cancelling asks before discarding changed inputs. Browser reload/close uses a beforeunload warning for dirty drafts, subject to browser behavior. Delete requires confirmation. Saves disable edit controls until completion and report success only after commit.
+- Guest records survive reopening the database in the same browser profile. Clearing browser data removes them. Unsaved drafts are held in memory; this phase does not provide crash recovery or service-worker offline cold starts. Local CRUD needs no network once the app is loaded.
+
+Run from `frontend/`: `corepack pnpm test`, `corepack pnpm typecheck`, `corepack pnpm lint`, and `corepack pnpm build`. Repository tests use isolated fake-indexeddb databases; UI interaction tests use jsdom and Testing Library. These are not real-browser visual or storage-compatibility checks.
