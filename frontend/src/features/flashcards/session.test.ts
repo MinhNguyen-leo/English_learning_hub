@@ -18,6 +18,27 @@ const words: Vocabulary[] = Array.from({ length: 80 }, (_, index) => ({
   updated_at: '2026-01-01T00:00:00.000Z',
 }))
 describe('sampling', () => {
+  it('deduplicates prompts across IDs, case, whitespace and Unicode variants', () => {
+    const rows = [
+      words[0]!,
+      { ...words[0]!, id: 'other', word: '  ＷＯＲＤ   ０ ' },
+    ]
+    expect(sampleVocabulary(rows, 'all', () => 0.5)).toHaveLength(1)
+  })
+  it('puts mistakes before the size limit, preserves random mode and shuffles ties', () => {
+    const mistakes = new Set(['word 79', 'word 78'])
+    const sample = sampleVocabulary(words, 20, () => 0, mistakes)
+    expect(
+      sample
+        .slice(0, 2)
+        .map((row) => row.word)
+        .sort(),
+    ).toEqual(['word 78', 'word 79'])
+    expect(sampleVocabulary(words, 20, () => 0)).not.toEqual(sample)
+    expect(sampleVocabulary(words, 20, () => 0.99, mistakes)).not.toEqual(
+      sample,
+    )
+  })
   it.each([20, 50, 'all'] as const)(
     'samples %s entries without replacement',
     (size) => {

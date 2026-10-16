@@ -14,17 +14,23 @@ import {
   type StudyAction,
 } from './session'
 import './flashcards.css'
+import { normalizeStudyText } from '../../lib/study'
 
 export function Flashcards({
   repository,
   progress,
+  initialSize = 20,
+  onSizeChange,
 }: {
+  initialSize?: SessionSize
+  onSizeChange?: (size: SessionSize) => void
   repository: VocabularyRepository
   progress: ReviewProgressRepository
 }) {
   const [library, setLibrary] = useState<Vocabulary[]>([])
   const [saved, setSaved] = useState<SavedSession | null>(null)
-  const [size, setSize] = useState<SessionSize>(20)
+  const [size, setSize] = useState<SessionSize>(initialSize)
+  const [reviewMode, setReviewMode] = useState(false)
   const [loading, setLoading] = useState(true)
   const [busy, setBusy] = useState(false)
   const [ready, setReady] = useState(false)
@@ -41,6 +47,14 @@ export function Flashcards({
   }, [restartOpen])
   const locked = useRef(false)
   const studyRoot = useRef<HTMLElement>(null)
+  const cardRoot = useRef<HTMLElement>(null)
+  const restoreCardFocus = useRef(false)
+  useEffect(() => {
+    if (restoreCardFocus.current) {
+      cardRoot.current?.focus()
+      restoreCardFocus.current = false
+    }
+  }, [saved])
   useEffect(() => {
     let active = true
     void Promise.allSettled([repository.list(), progress.load()]).then(
@@ -88,7 +102,24 @@ export function Flashcards({
       setLibrary(words)
       setLibraryError('')
       const next = await progress.save(
-        createSession(words, size),
+        createSession(
+          words,
+          size,
+          Math.random,
+          new Set(
+            reviewMode
+              ? saved?.session.cards
+                  .filter((card) =>
+                    saved.session.reviews.some(
+                      (review) =>
+                        review.id === card.id &&
+                        review.status === 'not-remembered',
+                    ),
+                  )
+                  .map((card) => normalizeStudyText(card.word))
+              : [],
+          ),
+        ),
         saved?.revision ?? null,
       )
       setSaved(next)
@@ -97,11 +128,15 @@ export function Flashcards({
   }
   function act(action: StudyAction) {
     if (!saved) return
+    const shouldFocus = Boolean(
+      cardRoot.current?.contains(document.activeElement),
+    )
     void run(async () => {
       const next = await progress.save(
         transition(saved.session, action),
         saved.revision,
       )
+      restoreCardFocus.current = shouldFocus
       setSaved(next)
       if (action.type === 'restart') setRestartOpen(false)
       setStatus('Progress saved locally.')
@@ -132,6 +167,9 @@ export function Flashcards({
   const card = session?.cards[session.index]
   const counts = session ? reviewCounts(session) : null
   const review = session?.reviews.find((item) => item.id === card?.id)?.status
+  const availableCount = new Set(
+    library.map((row) => normalizeStudyText(row.word)).filter(Boolean),
+  ).size
   useEffect(() => {
     const handleKey = (event: KeyboardEvent) => {
       const root = studyRoot.current
@@ -153,7 +191,7 @@ export function Flashcards({
       if (target instanceof Element) {
         if (
           target.closest(
-            'input, textarea, select, [contenteditable]:not([contenteditable="false"])',
+            'button, a, input, textarea, select, [role="button"], [contenteditable]:not([contenteditable="false"])',
           )
         )
           return
@@ -190,17 +228,31 @@ export function Flashcards({
         <>
           <div className="study-toolbar">
             <label>
+              Study mode
+              <select
+                value={reviewMode ? 'review' : 'random'}
+                disabled={busy}
+                onChange={(event) =>
+                  setReviewMode(event.target.value === 'review')
+                }
+              >
+                <option value="random">Random study</option>
+                <option value="review">Review mistakes first</option>
+              </select>
+            </label>
+            <label>
               Session size
               <select
                 value={size}
                 disabled={busy}
-                onChange={(event) =>
-                  setSize(
+                onChange={(event) => {
+                  const next =
                     event.target.value === 'all'
                       ? 'all'
-                      : (Number(event.target.value) as 20 | 50),
-                  )
-                }
+                      : (Number(event.target.value) as 20 | 50)
+                  setSize(next)
+                  onSizeChange?.(next)
+                }}
               >
                 <option value={20}>20 words</option>
                 <option value={50}>50 words</option>
@@ -223,10 +275,15 @@ export function Flashcards({
             </button>
           </div>
           <p>
-            {library.length} words available.{' '}
-            {size !== 'all' && library.length < size && library.length > 0
-              ? `Fewer than ${size} words are available; the new session will use all ${library.length}.`
-              : 'New sessions sample randomly without repeating an entry.'}
+            {availableCount} distinct words available.{' '}
+            {size !== 'all' && availableCount < size && availableCount > 0
+              ? `Fewer than ${size} words are available; the new session will use all ${availableCount}.`
+              : 'New sessions do not repeat a target word.'}
+          </p>
+          <p className="study-footnote">
+            {reviewMode
+              ? 'New sessions put Not remembered words from your saved flashcard session first, then random words. No due dates are stored; this is not overdue scheduling.'
+              : 'Random study remains available. Multiple records for the same word contribute one card.'}
           </p>
           {!library.length && !libraryError && (
             <p>
@@ -258,6 +315,7 @@ export function Flashcards({
                 Card {session.index + 1} of {session.cards.length}
               </p>
               <article
+                ref={cardRoot}
                 key={card.id}
                 className={`study-card ${session.flipped ? 'is-flipped' : ''}`}
                 aria-label={session.flipped ? 'Card back' : 'Card front'}

@@ -1,4 +1,8 @@
-import Dexie, { type Table } from 'dexie'
+import {
+  ApplicationDatabase as VocabularyDatabase,
+  StorageChangedError,
+} from '../../db/ApplicationDatabase'
+export { ApplicationDatabase as VocabularyDatabase } from '../../db/ApplicationDatabase'
 import {
   validate,
   duplicateKey,
@@ -23,24 +27,18 @@ export interface VocabularyRepository {
     snapshot: Vocabulary[],
   ): Promise<Vocabulary[]>
 }
-export class VocabularyDatabase extends Dexie {
-  vocabulary!: Table<Vocabulary, string>
-  constructor(name = 'english-learning-hub-guest') {
-    super(name)
-    this.version(1).stores({
-      vocabulary: 'id, word, part_of_speech, updated_at',
-    })
-  }
-}
 export class IndexedDBVocabularyRepository implements VocabularyRepository {
   private readonly db: VocabularyDatabase
-  constructor(db: VocabularyDatabase) {
+  private readonly generation: number | undefined
+  constructor(db: VocabularyDatabase, generation?: number) {
     this.db = db
+    this.generation = generation
   }
   private async storage<T>(operation: () => Promise<T>): Promise<T> {
     try {
       return await operation()
     } catch (error) {
+      if (error instanceof StorageChangedError) throw error
       if (error instanceof VocabularyError) throw error
       throw new VocabularyError(
         'Browser storage failed. Your changes were not confirmed. Keep your draft and retry. Check available space and browser storage permissions.',
@@ -62,45 +60,60 @@ export class IndexedDBVocabularyRepository implements VocabularyRepository {
   async create(input: VocabularyInput) {
     const value = validate(input)
     return this.storage(() =>
-      this.db.transaction('rw', this.db.vocabulary, async () => {
-        await this.checkDuplicate(value)
-        const now = new Date().toISOString()
-        const row = {
-          ...value,
-          id: crypto.randomUUID(),
-          created_at: now,
-          updated_at: now,
-        }
-        await this.db.vocabulary.add(row)
-        return row
-      }),
+      this.db.transaction(
+        'rw',
+        [this.db.vocabulary, this.db.metadata],
+        async () => {
+          await this.db.assertGeneration(this.generation)
+          await this.checkDuplicate(value)
+          const now = new Date().toISOString()
+          const row = {
+            ...value,
+            id: crypto.randomUUID(),
+            created_at: now,
+            updated_at: now,
+          }
+          await this.db.vocabulary.add(row)
+          return row
+        },
+      ),
     )
   }
   async update(id: string, input: VocabularyInput, expectedUpdatedAt: string) {
     const value = validate(input)
     return this.storage(() =>
-      this.db.transaction('rw', this.db.vocabulary, async () => {
-        const current = await this.current(id, expectedUpdatedAt)
-        if (duplicateKey(current) !== duplicateKey(value))
-          await this.checkDuplicate(value, id)
-        const row = {
-          ...current,
-          ...value,
-          updated_at: new Date(
-            Math.max(Date.now(), Date.parse(current.updated_at) + 1),
-          ).toISOString(),
-        }
-        await this.db.vocabulary.put(row)
-        return row
-      }),
+      this.db.transaction(
+        'rw',
+        [this.db.vocabulary, this.db.metadata],
+        async () => {
+          await this.db.assertGeneration(this.generation)
+          const current = await this.current(id, expectedUpdatedAt)
+          if (duplicateKey(current) !== duplicateKey(value))
+            await this.checkDuplicate(value, id)
+          const row = {
+            ...current,
+            ...value,
+            updated_at: new Date(
+              Math.max(Date.now(), Date.parse(current.updated_at) + 1),
+            ).toISOString(),
+          }
+          await this.db.vocabulary.put(row)
+          return row
+        },
+      ),
     )
   }
   delete(id: string, expectedUpdatedAt: string) {
     return this.storage(() =>
-      this.db.transaction('rw', this.db.vocabulary, async () => {
-        await this.current(id, expectedUpdatedAt)
-        await this.db.vocabulary.delete(id)
-      }),
+      this.db.transaction(
+        'rw',
+        [this.db.vocabulary, this.db.metadata],
+        async () => {
+          await this.db.assertGeneration(this.generation)
+          await this.current(id, expectedUpdatedAt)
+          await this.db.vocabulary.delete(id)
+        },
+      ),
     )
   }
   private async checkDuplicate(input: VocabularyInput, exceptId?: string) {
@@ -121,29 +134,34 @@ export class IndexedDBVocabularyRepository implements VocabularyRepository {
     snapshot: Vocabulary[],
   ) {
     return this.storage(() =>
-      this.db.transaction('rw', this.db.vocabulary, async () => {
-        const current = await this.db.vocabulary.toArray()
-        if (snapshotKey(current) !== snapshotKey(snapshot))
-          throw new VocabularyError(
-            'Your library changed since preview. Refresh the preview before importing. Nothing was imported.',
-          )
-        const plan = planImport(inputs, current, policy)
-        for (const { original, input } of plan.writes) {
-          const now = new Date(
-            Math.max(
-              Date.now(),
-              original ? Date.parse(original.updated_at) + 1 : 0,
-            ),
-          ).toISOString()
-          await this.db.vocabulary.put({
-            ...input,
-            id: original?.id ?? crypto.randomUUID(),
-            created_at: original?.created_at ?? now,
-            updated_at: now,
-          })
-        }
-        return this.db.vocabulary.toArray()
-      }),
+      this.db.transaction(
+        'rw',
+        [this.db.vocabulary, this.db.metadata],
+        async () => {
+          await this.db.assertGeneration(this.generation)
+          const current = await this.db.vocabulary.toArray()
+          if (snapshotKey(current) !== snapshotKey(snapshot))
+            throw new VocabularyError(
+              'Your library changed since preview. Refresh the preview before importing. Nothing was imported.',
+            )
+          const plan = planImport(inputs, current, policy)
+          for (const { original, input } of plan.writes) {
+            const now = new Date(
+              Math.max(
+                Date.now(),
+                original ? Date.parse(original.updated_at) + 1 : 0,
+              ),
+            ).toISOString()
+            await this.db.vocabulary.put({
+              ...input,
+              id: original?.id ?? crypto.randomUUID(),
+              created_at: original?.created_at ?? now,
+              updated_at: now,
+            })
+          }
+          return this.db.vocabulary.toArray()
+        },
+      ),
     )
   }
 }

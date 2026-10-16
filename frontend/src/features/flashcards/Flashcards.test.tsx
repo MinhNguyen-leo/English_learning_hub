@@ -80,6 +80,40 @@ async function start(user: ReturnType<typeof userEvent.setup>) {
   await user.click(screen.getByRole('button', { name: 'Start session' }))
   await screen.findByRole('article', { name: 'Card front' })
 }
+it('lets Space activate a focused review button instead of flipping the card', async () => {
+  const deps = dependencies(),
+    user = userEvent.setup()
+  render(<Flashcards {...deps} />)
+  await start(user)
+  screen.getByRole('button', { name: 'Not remembered' }).focus()
+  await user.keyboard(' ')
+  await waitFor(() =>
+    expect(vi.mocked(deps.progress.save).mock.calls.length).toBe(2),
+  )
+  expect((await deps.progress.load())?.session.reviews).toHaveLength(1)
+  expect(screen.getByRole('article', { name: 'Card front' })).toBeTruthy()
+})
+it('starts an optional review session with saved mistakes first, without repeating words', async () => {
+  const session = createSession(words, 'all', () => 0.9)
+  session.reviews = [{ id: session.cards[2]!.id, status: 'not-remembered' }]
+  const deps = dependencies({ id: 'active', revision: 1, session }),
+    user = userEvent.setup()
+  vi.mocked(deps.repository.list).mockResolvedValue([
+    ...words,
+    { ...words[0]!, id: 'duplicate', word: ' WORD 0 ' },
+  ])
+  vi.spyOn(window, 'confirm').mockReturnValue(true)
+  render(<Flashcards {...deps} />)
+  await screen.findByRole('article')
+  expect(screen.getByLabelText('Study mode')).toHaveProperty('value', 'random')
+  await user.selectOptions(screen.getByLabelText('Study mode'), 'review')
+  await user.click(screen.getByRole('button', { name: 'Start new session' }))
+  await waitFor(() => expect(screen.getByText('Card 1 of 3')).toBeTruthy())
+  const stored = (await deps.progress.load())!
+  expect(stored.revision).toBe(2)
+  expect(stored.session.cards[0]!.word).toBe(session.cards[2]!.word)
+  expect(stored.session.reviews).toEqual([])
+})
 it('places navigation inside the card and supports Space and arrow keys without flipping twice', async () => {
   const deps = dependencies(),
     user = userEvent.setup()
@@ -96,6 +130,7 @@ it('places navigation inside the card and supports Space and arrow keys without 
   await user.keyboard('{ArrowRight}')
   expect(await screen.findByText('Card 2 of 3')).toBeTruthy()
   expect(screen.getByRole('article', { name: 'Card front' })).toBeTruthy()
+  expect(document.activeElement).toBe(screen.getByRole('article'))
   await user.keyboard('{ArrowLeft}')
   expect(await screen.findByText('Card 1 of 3')).toBeTruthy()
   await user.click(

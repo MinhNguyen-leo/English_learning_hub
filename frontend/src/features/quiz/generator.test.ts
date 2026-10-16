@@ -3,6 +3,59 @@ import { equivalentMeanings, generateQuiz, normalize } from './generator'
 import { seededRandom, vocabulary, word } from './testSupport'
 
 describe('seeded question generation', () => {
+  it('does not assume translations with overlapping words and different qualifiers are equivalent', () => {
+    const rows = vocabulary(6).map((row, i) => ({
+      ...row,
+      vietnamese_meaning: `giáo dục mầm non — Tiếng Việt ${i}`,
+    }))
+    expect(generateQuiz(rows, 10, seededRandom(42)).questions).toHaveLength(6)
+  })
+  it('prioritizes mistakes before limiting the sample without weakening distractor checks', () => {
+    const rows = vocabulary(),
+      mistakes = new Set(['term 59', 'term 58'])
+    const quiz = generateQuiz(rows, 10, seededRandom(42), mistakes)
+    expect(
+      quiz.questions
+        .slice(0, 2)
+        .map((question) => question.target.word)
+        .sort(),
+    ).toEqual(['term-58', 'term-59'])
+    expect(quiz).toEqual(generateQuiz(rows, 10, seededRandom(42), mistakes))
+    expect(quiz).not.toEqual(generateQuiz(rows, 10, seededRandom(42)))
+    expect(quiz.eligibleCount).toBe(60)
+  })
+  it('rejects overlapping alternative translations, not just identical translation strings', () => {
+    const rows = [
+      word('target', 'A celestial body', {
+        vietnamese_meaning: 'ngôi sao; tinh tú',
+      }),
+      word('alternative', 'A distant luminous object', {
+        vietnamese_meaning: 'tinh tú',
+      }),
+      ...vocabulary(6),
+    ]
+    for (let seed = 1; seed <= 12; seed++) {
+      const question = generateQuiz(
+        rows,
+        'all',
+        seededRandom(seed),
+      ).questions.find((q) => q.target.id === 'target')!
+      expect(question).toBeTruthy()
+      expect(question.options).not.toContain('A distant luminous object')
+    }
+  })
+  it('never fills four options with duplicate meanings when many records have only three meanings', () => {
+    const rows = Array.from({ length: 18 }, (_, i) =>
+      word(
+        `entry-${i}`,
+        ['A celestial body', 'A wooden chair', 'An edible fruit'][i % 3]!,
+      ),
+    )
+    expect(generateQuiz(rows, 10, seededRandom(1))).toEqual({
+      questions: [],
+      eligibleCount: 0,
+    })
+  })
   it('generates identical quizzes from a fixed seed without mutating the library', () => {
     const rows = vocabulary(),
       original = structuredClone(rows)

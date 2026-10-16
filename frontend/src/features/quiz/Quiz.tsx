@@ -9,18 +9,28 @@ import {
 } from './session'
 import type { QuizProgressRepository, SavedQuiz } from './progressRepository'
 import './quiz.css'
+import { normalizeStudyText } from '../../lib/study'
 
 export function Quiz({
   repository,
   progress,
+  initialSize = 10,
+  onSizeChange,
   active = true,
 }: {
+  initialSize?: QuizSize
+  onSizeChange?: (size: QuizSize) => void
   repository: VocabularyRepository
   progress: QuizProgressRepository
   active?: boolean
 }) {
   const [saved, setSaved] = useState<SavedQuiz | null>(null)
-  const [size, setSize] = useState<QuizSize>(10)
+  const [size, setSize] = useState<QuizSize>(initialSize)
+  const [reviewMode, setReviewMode] = useState(false)
+  const [autoAdvanceEnabled, setAutoAdvanceEnabled] = useState(true)
+  const quizRoot = useRef<HTMLElement>(null)
+  const questionHeading = useRef<HTMLHeadingElement>(null)
+  const restoreQuestionFocus = useRef(false)
   const [selected, setSelected] = useState<number | null>(null)
   const [autoAdvance, setAutoAdvance] = useState<{
     id: string
@@ -78,7 +88,19 @@ export function Quiz({
       return
     setAutoAdvance(null)
     void run(async () => {
-      const generated = generateQuiz(await repository.list(), size)
+      const mistakes = new Set(
+        reviewMode && saved
+          ? quizResults(saved.session).missed.map((word) =>
+              normalizeStudyText(word.word),
+            )
+          : [],
+      )
+      const generated = generateQuiz(
+        await repository.list(),
+        size,
+        Math.random,
+        mistakes,
+      )
       const next = await progress.save(
         createQuizSession(generated, size),
         saved?.revision ?? null,
@@ -92,12 +114,16 @@ export function Quiz({
   }
   function act(action: QuizAction) {
     if (!saved) return
+    const shouldFocus =
+      action.type !== 'submit' &&
+      Boolean(quizRoot.current?.contains(document.activeElement))
     setAutoAdvance(null)
     void run(async () => {
       const next = await progress.save(
         quizTransition(saved.session, action),
         saved.revision,
       )
+      restoreQuestionFocus.current = shouldFocus
       setSaved(next)
       setSelected(null)
       if (action.type === 'submit')
@@ -111,8 +137,15 @@ export function Quiz({
   const results = session ? quizResults(session) : null
   const advanceDelay = submitted === question?.correctIndex ? 1500 : 2500
   useEffect(() => {
+    if (restoreQuestionFocus.current && active) {
+      questionHeading.current?.focus()
+      restoreQuestionFocus.current = false
+    }
+  }, [saved, active])
+  useEffect(() => {
     if (
       !active ||
+      !autoAdvanceEnabled ||
       busy ||
       error ||
       !autoAdvance ||
@@ -131,7 +164,7 @@ export function Quiz({
     return () => window.clearTimeout(timer)
   })
   return (
-    <main className="quiz-page">
+    <main className="quiz-page" ref={quizRoot}>
       <header>
         <p className="eyebrow">ENGLISH LEARNING HUB / VOCABULARY QUIZ</p>
         <h1>Test your vocabulary</h1>
@@ -146,17 +179,31 @@ export function Quiz({
         <>
           <div className="quiz-toolbar">
             <label>
+              Study mode
+              <select
+                value={reviewMode ? 'review' : 'random'}
+                disabled={busy}
+                onChange={(event) =>
+                  setReviewMode(event.target.value === 'review')
+                }
+              >
+                <option value="random">Random study</option>
+                <option value="review">Review mistakes first</option>
+              </select>
+            </label>
+            <label>
               Quiz size
               <select
                 value={size}
                 disabled={busy}
-                onChange={(event) =>
-                  setSize(
+                onChange={(event) => {
+                  const next =
                     event.target.value === 'all'
                       ? 'all'
-                      : (Number(event.target.value) as 10 | 20 | 50),
-                  )
-                }
+                      : (Number(event.target.value) as 10 | 20 | 50)
+                  setSize(next)
+                  onSizeChange?.(next)
+                }}
               >
                 <option value={10}>10 questions</option>
                 <option value={20}>20 questions</option>
@@ -182,6 +229,21 @@ export function Quiz({
               Reload saved quiz
             </button>
           </div>
+          <label className="quiz-auto-advance">
+            <input
+              type="checkbox"
+              checked={autoAdvanceEnabled}
+              onChange={(event) => setAutoAdvanceEnabled(event.target.checked)}
+            />{' '}
+            Automatically advance after feedback
+          </label>
+          {reviewMode && (
+            <p className="quiz-help">
+              New quizzes prioritize incorrect words from your saved quiz, then
+              random eligible words. No due dates are stored; this is not
+              overdue scheduling. Ambiguous words may still be skipped.
+            </p>
+          )}
           <p className="quiz-help">
             Needs at least four distinct, unrelated English meanings. Similar
             parts of speech and #tags in notes are preferred. Ambiguous choices
@@ -246,8 +308,15 @@ export function Quiz({
                     Score: {results.correct} / {results.answered} answered
                   </p>
                   <section className="quiz-card" aria-label="Quiz question">
-                    <h2>{question.target.word}</h2>
+                    <h2 ref={questionHeading} tabIndex={-1}>
+                      {question.target.word}
+                    </h2>
                     <p>Which English meaning matches this word?</p>
+                    <p className="quiz-help">
+                      Click an answer to submit. With a keyboard, use arrow keys
+                      to choose, then Tab to Submit selected answer. Turn off
+                      automatic advance for more reading time.
+                    </p>
                     <fieldset disabled={busy || submitted !== null}>
                       <legend className="sr-only">Answer options</legend>
                       <div className="quiz-options">
@@ -267,13 +336,11 @@ export function Quiz({
                                   !locked.current
                                 ) {
                                   setSelected(index)
-                                  act({ type: 'submit', choice: index })
                                 }
                               }}
-                              onClick={() => {
+                              onClick={(event) => {
                                 if (
-                                  error &&
-                                  selected === index &&
+                                  event.detail > 0 &&
                                   !busy &&
                                   submitted === null &&
                                   !locked.current
@@ -299,6 +366,17 @@ export function Quiz({
                         ))}
                       </div>
                     </fieldset>
+                    {submitted === null && selected !== null && (
+                      <button
+                        className="quiz-primary"
+                        disabled={busy}
+                        onClick={() =>
+                          act({ type: 'submit', choice: selected })
+                        }
+                      >
+                        Submit selected answer
+                      </button>
+                    )}
                     {submitted !== null ? (
                       <p className="quiz-feedback" role="status">
                         {submitted === question.correctIndex
@@ -309,6 +387,7 @@ export function Quiz({
                       </p>
                     ) : null}
                     {active &&
+                      autoAdvanceEnabled &&
                       !busy &&
                       !error &&
                       autoAdvance?.id === session.id &&

@@ -55,6 +55,21 @@ async function start(user: ReturnType<typeof userEvent.setup>) {
   await user.click(screen.getByRole('button', { name: 'Start quiz' }))
   await screen.findByRole('region', { name: 'Quiz question' })
 }
+it('allows radio arrow navigation without submitting an answer', async () => {
+  const deps = dependencies(),
+    user = userEvent.setup()
+  render(<Quiz {...deps} />)
+  await start(user)
+  screen.getAllByRole('radio')[0]!.focus()
+  await user.keyboard('{ArrowDown}')
+  expect((await deps.progress.load())?.session.answers[0]).toBeNull()
+  await user.click(
+    screen.getByRole('button', { name: 'Submit selected answer' }),
+  )
+  await waitFor(async () =>
+    expect((await deps.progress.load())?.session.answers[0]).toBe(1),
+  )
+})
 it('submits one answer, reveals the correct answer and prevents resubmission', async () => {
   const deps = dependencies(),
     user = userEvent.setup()
@@ -94,6 +109,62 @@ it('submits one answer, reveals the correct answer and prevents resubmission', a
       `Not quite. Correct answer: ${question.options[question.correctIndex]}`,
     ),
   ).toBeTruthy()
+})
+it('can disable auto-advance and keeps manual keyboard navigation available', async () => {
+  const deps = dependencies(),
+    user = userEvent.setup()
+  render(<Quiz {...deps} />)
+  await start(user)
+  await user.click(
+    screen.getByRole('checkbox', {
+      name: 'Automatically advance after feedback',
+    }),
+  )
+  await user.click(screen.getAllByRole('radio')[0]!)
+  vi.useFakeTimers()
+  await reactAct(async () => {
+    await vi.advanceTimersByTimeAsync(6000)
+  })
+  expect((await deps.progress.load())?.session.index).toBe(0)
+  vi.useRealTimers()
+  const next = screen.getByRole('button', { name: 'Next question' })
+  next.focus()
+  await user.keyboard('{Enter}')
+  await screen.findByText(/Question 2 of 4/)
+  expect(document.activeElement).toBe(
+    within(screen.getByRole('region', { name: 'Quiz question' })).getByRole(
+      'heading',
+    ),
+  )
+})
+it('prioritizes saved mistakes in a new review quiz and retains progress if replacement fails', async () => {
+  const generated = createQuizSession(
+    generateQuiz(vocabulary(4), 10, seededRandom(42)),
+    10,
+  )
+  const session = quizTransition(generated, {
+    type: 'submit',
+    choice: (generated.questions[0]!.correctIndex + 1) % 4,
+  })
+  const deps = dependencies({ id: 'active', revision: 1, session }),
+    user = userEvent.setup()
+  vi.spyOn(window, 'confirm').mockReturnValue(true)
+  render(<Quiz {...deps} />)
+  await screen.findByRole('region', { name: 'Quiz question' })
+  expect(screen.getByLabelText('Study mode')).toHaveProperty('value', 'random')
+  await user.selectOptions(screen.getByLabelText('Study mode'), 'review')
+  vi.mocked(deps.progress.save).mockRejectedValueOnce(new Error('Storage full'))
+  await user.click(screen.getByRole('button', { name: 'Start new quiz' }))
+  await screen.findByRole('alert')
+  expect((await deps.progress.load())?.session).toEqual(session)
+  await user.click(screen.getByRole('button', { name: 'Start new quiz' }))
+  await waitFor(() => expect(screen.queryByRole('alert')).toBeNull())
+  const stored = (await deps.progress.load())!
+  expect(stored.revision).toBe(2)
+  expect(stored.session.questions[0]!.target.word).toBe(
+    session.questions[0]!.target.word,
+  )
+  expect(stored.session.answers).toEqual([null, null, null, null])
 })
 it('restores submitted feedback and fixed option order on remount without rereading vocabulary', async () => {
   const deps = dependencies(),
@@ -191,6 +262,7 @@ it.each([true, false])(
         screen.getAllByRole('radio')[
           correct ? question.correctIndex : (question.correctIndex + 1) % 4
         ]!,
+        { detail: 1 },
       )
     })
     expect(screen.getByText(/Correct answer:/)).toBeTruthy()
@@ -228,7 +300,7 @@ it('pauses auto-advance when leaving Quiz and resumes when returning', async () 
   await start(user)
   vi.useFakeTimers()
   await reactAct(async () => {
-    fireEvent.click(screen.getAllByRole('radio')[0]!)
+    fireEvent.click(screen.getAllByRole('radio')[0]!, { detail: 1 })
   })
   rendered.rerender(<Quiz {...deps} active={false} />)
   await reactAct(async () => {
@@ -255,7 +327,7 @@ it('automatically shows results after the feedback delay for the final answer', 
   await screen.findByRole('region', { name: 'Quiz question' })
   vi.useFakeTimers()
   await reactAct(async () => {
-    fireEvent.click(screen.getAllByRole('radio')[0]!)
+    fireEvent.click(screen.getAllByRole('radio')[0]!, { detail: 1 })
   })
   await reactAct(async () => {
     await vi.advanceTimersByTimeAsync(3000)

@@ -1,4 +1,5 @@
 import { fieldNames, validate, type Vocabulary } from '../vocabulary/model'
+import { normalizeStudyText, prioritizeMistakes } from '../../lib/study'
 
 export type SessionSize = 20 | 50 | 'all'
 export type ReviewStatus = 'remembered' | 'not-remembered'
@@ -39,11 +40,23 @@ export function sampleVocabulary(
   rows: readonly Vocabulary[],
   size: SessionSize,
   random: () => number = Math.random,
+  mistakes: ReadonlySet<string> = new Set(),
 ): Vocabulary[] {
   if (size !== 20 && size !== 50 && size !== 'all')
     throw new Error('Choose 20, 50 or all words.')
   const unique = [...new Map(rows.map((row) => [row.id, row])).values()]
-  return shuffled(unique, random)
+  const seen = new Set<string>()
+  return prioritizeMistakes(
+    shuffled(unique, random),
+    (row) => row.word,
+    mistakes,
+  )
+    .filter((row) => {
+      const word = normalizeStudyText(row.word)
+      if (!word || seen.has(word)) return false
+      seen.add(word)
+      return true
+    })
     .slice(0, size === 'all' ? unique.length : size)
     .map((row) => ({ ...row }))
 }
@@ -51,8 +64,9 @@ export function createSession(
   rows: readonly Vocabulary[],
   size: SessionSize,
   random: () => number = Math.random,
+  mistakes: ReadonlySet<string> = new Set(),
 ): StudySession {
-  const cards = sampleVocabulary(rows, size, random)
+  const cards = sampleVocabulary(rows, size, random, mistakes)
   if (!cards.length)
     throw new Error(
       'Your vocabulary library is empty. Add words before starting a session.',

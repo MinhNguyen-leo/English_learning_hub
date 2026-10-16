@@ -1,23 +1,22 @@
-@import 'tailwindcss';
-
+﻿@import 'tailwindcss';
 :root {
   color-scheme: light;
-  --page-bg: #f8eeee;
-  --surface: #fffdfb;
-  --surface-tint: #fce1e2;
-  --surface-hover: #fff0ef;
-  --text: #382128;
-  --text-muted: #75545c;
-  --primary: #a32942;
-  --primary-dark: #7d1930;
-  --focus: #a32942;
-  --border: #e4bfc4;
-  --control-border: #ba838e;
-  --card-ink: #641b31;
-  --card-accent: #f1a287;
+  --page-bg: #f5f5f8;
+  --surface: #ffffff;
+  --surface-tint: #f2eafa;
+  --surface-hover: #f8f4fe;
+  --text: #252237;
+  --text-muted: #726e83;
+  --primary: #8840df;
+  --primary-dark: #6b27bc;
+  --focus: #7230c2;
+  --border: #e7e5ed;
+  --control-border: #b4a4c7;
+  --card-ink: #492375;
+  --card-accent: #c5a0f6;
   --error-text: #98223b;
   --error-bg: #ffe9eb;
-  font-family: system-ui, sans-serif;
+  font-family: 'Segoe UI', system-ui, sans-serif;
   color: var(--text);
   background: var(--page-bg);
   font-synthesis: none;
@@ -25,46 +24,14 @@
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
-
 body {
-  position: relative;
-  isolation: isolate;
-  background: var(--page-bg);
-  min-height: 100svh;
   margin: 0;
   min-width: 320px;
-}
-
-body::before {
-  content: '';
-  position: fixed;
-  inset: 0;
-  z-index: 0;
-  pointer-events: none;
-  background-color: var(--page-bg);
-  background-image:
-    linear-gradient(110deg, rgb(255 249 247 / 40%), rgb(255 249 247 / 12%)),
-    url('./assets/study-background.png');
-  background-position: center;
-  background-size: cover;
-  background-repeat: no-repeat;
-}
-
-#root {
-  position: relative;
-  z-index: 1;
   min-height: 100svh;
 }
-
-@media (max-width: 600px) {
-  body::before {
-    background-position: 65% center;
-    background-image:
-      linear-gradient(rgb(255 249 247 / 60%), rgb(255 249 247 / 35%)),
-      url('./assets/study-background.png');
-  }
+#root {
+  min-height: 100svh;
 }
-
 button,
 input,
 select,

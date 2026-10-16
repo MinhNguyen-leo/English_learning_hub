@@ -1,4 +1,5 @@
 import { validate, type Vocabulary } from '../vocabulary/model'
+import { normalizeStudyText, prioritizeMistakes } from '../../lib/study'
 
 export type QuizSize = 10 | 20 | 50 | 'all'
 export interface QuizQuestion {
@@ -22,14 +23,7 @@ export function shuffle<T>(source: readonly T[], random: Random): T[] {
   }
   return result
 }
-export function normalize(value: string): string {
-  return value
-    .normalize('NFKC')
-    .toLowerCase()
-    .replace(/[\p{P}\p{S}]/gu, ' ')
-    .replace(/\s+/g, ' ')
-    .trim()
-}
+export const normalize = normalizeStudyText
 const synonymGroups = [
   ['happy', 'glad', 'joyful', 'cheerful'],
   ['sad', 'unhappy', 'sorrowful'],
@@ -97,6 +91,17 @@ export function equivalentMeanings(a: string, b: string): boolean {
     )
   )
 }
+// Translation alternatives are exact normalized matches. Applying the English
+// token-overlap heuristic here can collapse distinct numbered/qualified meanings.
+function overlappingTranslations(a: string, b: string): boolean {
+  const alternatives = (value: string) =>
+    value
+      .split(/[;,/|\n]+/)
+      .map(normalize)
+      .filter(Boolean)
+  const left = new Set(alternatives(a))
+  return alternatives(b).some((value) => left.has(value))
+}
 function part(value: string): string {
   const key = normalize(value)
   return (
@@ -134,6 +139,7 @@ export function generateQuiz(
   rows: readonly Vocabulary[],
   size: QuizSize,
   random: Random = Math.random,
+  mistakes: ReadonlySet<string> = new Set(),
 ): GeneratedQuiz {
   if (![10, 20, 50, 'all'].includes(size))
     throw new Error('Choose 10, 20, 50 or all eligible questions.')
@@ -189,7 +195,8 @@ export function generateQuiz(
     tags: tags(row),
     meanings: alternatives(row.english_meaning),
     family: root(row.word),
-    translation: normalize(row.vietnamese_meaning),
+    // Keep separators until individual alternatives have been compared.
+    translation: row.vietnamese_meaning.trim(),
   }))
   const candidates = all.filter(
     (entry) => entry.meanings.length && entry.row.english_meaning.trim(),
@@ -205,7 +212,11 @@ export function generateQuiz(
   const questions: QuizQuestion[] = []
   let eligibleCount = 0
   // Target order and distractor/answer positions all use the injected random source.
-  for (const target of shuffle(candidates, random)) {
+  for (const target of prioritizeMistakes(
+    shuffle(candidates, random),
+    (entry) => entry.word,
+    mistakes,
+  )) {
     if (usedTargets.has(target.word)) continue
     const family = groups.get(target.family) ?? [target]
     const protectedMeanings = family.flatMap((entry) => entry.meanings)
@@ -233,7 +244,10 @@ export function generateQuiz(
     for (const tier of safe) {
       for (const candidate of shuffle(tier, random)) {
         if (
-          excludedTranslations.has(candidate.translation) ||
+          (Boolean(candidate.translation) &&
+            [...excludedTranslations].some((translation) =>
+              overlappingTranslations(translation, candidate.translation),
+            )) ||
           candidate.meanings.some((right) =>
             excludedMeanings.some((left) => overlaps(left, right)),
           )
@@ -244,7 +258,11 @@ export function generateQuiz(
             (selected) =>
               selected.family === candidate.family ||
               (Boolean(candidate.translation) &&
-                selected.translation === candidate.translation) ||
+                Boolean(selected.translation) &&
+                overlappingTranslations(
+                  selected.translation,
+                  candidate.translation,
+                )) ||
               selected.meanings.some((left) =>
                 candidate.meanings.some((right) => overlaps(left, right)),
               ),

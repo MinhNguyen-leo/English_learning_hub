@@ -25,6 +25,8 @@
 }
 .quiz-page button,
 .quiz-page select {
+  min-height: 44px;
+  max-width: 100%;
   padding: 10px 16px;
   border: 1px solid var(--control-border);
   border-radius: 8px;
@@ -67,6 +69,7 @@
   margin: 24px 0;
 }
 .quiz-option {
+  min-height: 48px;
   display: flex;
   gap: 12px;
   align-items: center;
@@ -80,6 +83,22 @@
 .quiz-option:has(input:checked) {
   background: var(--surface-tint);
   border-color: var(--primary);
+}
+.quiz-option:focus-within {
+  outline: 3px solid var(--focus);
+  outline-offset: 3px;
+}
+.quiz-auto-advance {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  cursor: pointer;
+}
+.quiz-auto-advance input {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
 }
 .quiz-option > span:not(.quiz-letter) {
   flex: 1;
@@ -164,6 +183,18 @@
   }
 }
 @media (max-width: 600px) {
+  .quiz-toolbar > label {
+    min-width: 0;
+    width: 100%;
+  }
+  .quiz-toolbar select {
+    min-width: 0;
+    font-size: 16px;
+  }
+  .quiz-option > span:not(.quiz-letter) {
+    min-width: 0;
+    flex-basis: 100px;
+  }
   .quiz-page {
     padding: 24px 12px;
   }

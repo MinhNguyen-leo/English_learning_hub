@@ -9,6 +9,8 @@
 .app-navigation button,
 .flashcards button,
 .flashcards select {
+  min-height: 44px;
+  max-width: 100%;
   padding: 10px 16px;
   border: 1px solid var(--control-border);
   border-radius: 6px;
@@ -325,6 +327,14 @@
   border-color: var(--primary);
 }
 @media (max-width: 600px) {
+  .study-toolbar > label {
+    min-width: 0;
+    width: 100%;
+  }
+  .study-toolbar select {
+    min-width: 0;
+    font-size: 16px;
+  }
   .flashcards {
     padding: 24px 12px;
   }
@@ -339,7 +349,7 @@
     gap: 8px;
   }
   .flashcards .study-card .study-arrow {
-    width: 42px;
+    width: 44px;
   }
   .flashcards .study-card .study-arrow > span {
     font-size: 21px;
