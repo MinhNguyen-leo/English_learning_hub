@@ -1,21 +1,23 @@
 ﻿@import 'tailwindcss';
 :root {
-  color-scheme: light;
-  --page-bg: #f5f5f8;
-  --surface: #ffffff;
-  --surface-tint: #f2eafa;
-  --surface-hover: #f8f4fe;
-  --text: #252237;
-  --text-muted: #726e83;
-  --primary: #8840df;
-  --primary-dark: #6b27bc;
-  --focus: #7230c2;
-  --border: #e7e5ed;
-  --control-border: #b4a4c7;
-  --card-ink: #492375;
-  --card-accent: #c5a0f6;
-  --error-text: #98223b;
-  --error-bg: #ffe9eb;
+  color-scheme: dark;
+  --page-bg: #0c0c0b;
+  --surface: #242320;
+  --surface-tint: #102d28;
+  --surface-hover: #30312c;
+  --text: #f5f5f1;
+  --text-muted: #b1ada5;
+  --primary: #008573;
+  --primary-dark: #68dfc9;
+  --focus: #45dfc3;
+  --border: #3d3b35;
+  --control-border: #615e54;
+  --card-ink: #e1f6ef;
+  --card-accent: #174f42;
+  --accent: #ff8750;
+  --accent-soft: #38251c;
+  --error-text: #ffadbc;
+  --error-bg: #391d27;
   font-family: 'Segoe UI', system-ui, sans-serif;
   color: var(--text);
   background: var(--page-bg);
@@ -23,6 +25,24 @@
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+* {
+  box-sizing: border-box;
+}
+button,
+a,
+input,
+select,
+textarea {
+  -webkit-tap-highlight-color: transparent;
+}
+button:not(:disabled),
+a {
+  touch-action: manipulation;
+}
+::selection {
+  color: #153e36;
+  background: #c7e9dd;
 }
 body {
   margin: 0;

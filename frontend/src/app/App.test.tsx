@@ -38,6 +38,21 @@ it('persists study preferences and reloads all mounted learning views after a co
   const user = userEvent.setup()
   render(<App />)
   await screen.findByRole('heading', { name: 'Learning Dashboard' })
+  const instagram = screen.getByRole('link', { name: /Instagram t_minleo/ })
+  expect(instagram.getAttribute('href')).toBe(
+    'https://www.instagram.com/t_minleo/',
+  )
+  expect(instagram.getAttribute('target')).toBe('_blank')
+  expect(screen.getByText('feedback to me at ins:')).toBeTruthy()
+  expect(screen.getByText('donate hay bị chan')).toBeTruthy()
+  expect(screen.getByText('0933133496 vietinbank')).toBeTruthy()
+  await waitFor(() =>
+    expect(
+      within(screen.getByRole('region', { name: 'Visit streak' })).getByText(
+        '1 day',
+      ),
+    ).toBeTruthy(),
+  )
   await user.click(screen.getByRole('button', { name: 'Vocabulary' }))
   await screen.findByRole('button', { name: 'Word for term-0' })
   await user.click(screen.getByRole('button', { name: 'Flashcards' }))

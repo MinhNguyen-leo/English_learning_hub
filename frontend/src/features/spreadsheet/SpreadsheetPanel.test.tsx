@@ -1,12 +1,18 @@
 // @vitest-environment jsdom
-import { cleanup, render, screen, waitFor } from '@testing-library/react'
+import {
+  cleanup,
+  render,
+  screen,
+  waitFor,
+  within,
+} from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import SpreadsheetPanel from './SpreadsheetPanel'
 import { readUpload, downloadXlsx } from './browser'
-import { emptyInput, type Vocabulary } from '../vocabulary/model'
+import { emptyInput, fieldNames, type Vocabulary } from '../vocabulary/model'
 import type { VocabularyRepository } from '../vocabulary/repository'
-import type { ParsedSheet } from './xlsx'
+import { autoMapping, parseXlsx, previewRows, type ParsedSheet } from './xlsx'
 
 vi.mock('./browser', () => ({ readUpload: vi.fn(), downloadXlsx: vi.fn() }))
 const sheet: ParsedSheet = {
@@ -187,6 +193,55 @@ it('downloads the blank template and exports the full saved repository', async (
     'textContent',
     'Exported 1 entries.',
   )
+})
+it('previews an example without uploading or changing vocabulary and downloads the same importable worksheet', async () => {
+  const user = userEvent.setup()
+  render(
+    <SpreadsheetPanel
+      repository={repo}
+      onClose={vi.fn()}
+      onImported={vi.fn()}
+    />,
+  )
+  const toggle = screen.getByRole('button', { name: 'Preview Excel template' })
+  expect(toggle.getAttribute('aria-expanded')).toBe('false')
+  expect(
+    screen.queryByRole('region', { name: 'Excel template example' }),
+  ).toBeNull()
+  await user.click(toggle)
+  expect(toggle.getAttribute('aria-expanded')).toBe('true')
+  const example = screen.getByRole('region', { name: 'Excel template example' })
+  for (const field of fieldNames) {
+    expect(
+      within(example).getByRole('columnheader', { name: field }),
+    ).toBeTruthy()
+  }
+  expect(within(example).getByText('curious')).toBeTruthy()
+  expect(within(example).getByText('discover')).toBeTruthy()
+  expect(readUpload).not.toHaveBeenCalled()
+  expect(repo.list).not.toHaveBeenCalled()
+  expect(repo.importEntries).not.toHaveBeenCalled()
+  await user.click(
+    screen.getByRole('button', { name: 'Download example workbook' }),
+  )
+  const [bytes, filename] = vi.mocked(downloadXlsx).mock.calls[0]!
+  expect(filename).toBe('vocabulary-example.xlsx')
+  const parsed = parseXlsx(bytes, filename)
+  const rows = previewRows(parsed, autoMapping(parsed.headers))
+  expect(parsed.headers).toEqual(fieldNames)
+  expect(rows.map((row) => row.errors)).toEqual([[], []])
+  expect(rows.map((row) => row.input.word)).toEqual(['curious', 'discover'])
+  for (const row of rows) {
+    for (const field of fieldNames) {
+      if (row.input[field])
+        expect(within(example).getByText(row.input[field])).toBeTruthy()
+    }
+  }
+  expect(repo.importEntries).not.toHaveBeenCalled()
+  await user.click(screen.getByRole('button', { name: 'Hide Excel template' }))
+  expect(
+    screen.queryByRole('region', { name: 'Excel template example' }),
+  ).toBeNull()
 })
 it('shows file errors without writing and blocks preview until required columns are mapped', async () => {
   const user = userEvent.setup()

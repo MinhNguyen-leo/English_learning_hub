@@ -15,11 +15,15 @@ import {
 import { initializeStorage } from '../db/initialize'
 import { Dashboard } from '../features/dashboard/Dashboard'
 import { IndexedDBDashboardRepository } from '../features/dashboard/repository'
+import { IndexedDBStreakRepository } from '../features/dashboard/streakRepository'
+import { useVisitStreak } from '../features/dashboard/useVisitStreak'
 import './app.css'
+import './academy-theme.css'
 
 const db = new ApplicationDatabase()
 const backup = new IndexedDBBackupRepository(db)
 const dashboard = new IndexedDBDashboardRepository(db)
+const streakRepository = new IndexedDBStreakRepository(db)
 async function loadRuntime() {
   await initializeStorage(db)
   return db.transaction('r', [db.metadata, db.settings], async () => {
@@ -86,6 +90,7 @@ function LearningHub({
   onRestored: () => Promise<void>
 }) {
   const { repository, progress, quizProgress } = runtime
+  const streak = useVisitStreak(streakRepository)
   const [view, setView] = useState<
     'vocabulary' | 'flashcards' | 'quiz' | 'data' | 'dashboard'
   >('dashboard')
@@ -112,7 +117,7 @@ function LearningHub({
   }
   return (
     <div className="app-shell">
-      <aside className="app-sidebar">
+      <header className="app-sidebar">
         <a
           className="app-brand"
           href="#"
@@ -121,7 +126,20 @@ function LearningHub({
             setView('dashboard')
           }}
         >
-          <span className="brand-mark">Eh</span>
+          <span className="brand-mark" aria-hidden="true">
+            <svg
+              width="25"
+              height="25"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.7"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M12 5v15M3 4h4a7 7 0 0 1 5 2 7 7 0 0 1 5-2h4v14h-4a7 7 0 0 0-5 2 7 7 0 0 0-5-2H3Z" />
+            </svg>
+          </span>
           <span>
             English Hub<small>YOUR LEARNING SPACE</small>
           </span>
@@ -182,15 +200,13 @@ function LearningHub({
             Data Management
           </button>
         </nav>
-        <div className="sidebar-note">
-          <strong>A little practice, every day.</strong>
-          <p>Your words. Your pace. Your progress.</p>
-          <span>● Saved on this device</span>
-        </div>
-      </aside>
+        <span className="device-badge">
+          <span aria-hidden="true">●</span> Saved on this device
+        </span>
+      </header>
       <div className="app-workspace">
         <header className="app-topbar">
-          <div>
+          <div className="workspace-title">
             <span className="topbar-label">Your workspace</span>
             <strong>
               {view === 'data'
@@ -198,15 +214,79 @@ function LearningHub({
                 : view.charAt(0).toUpperCase() + view.slice(1)}
             </strong>
           </div>
+          <svg
+            className="contact-graffiti"
+            viewBox="0 0 300 90"
+            fill="none"
+            aria-hidden="true"
+            focusable="false"
+          >
+            <path
+              d="M12 62c44-54 88 28 126-15s60-8 92-24M20 73c56-41 83 21 123-14s62-9 88-26"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+            />
+            <path
+              d="m244 14 5 12 13 1-10 9 3 13-12-7-11 7 2-13-10-9 14-1Z"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinejoin="round"
+            />
+            <path
+              d="m273 57 12 12m0-12-12 12M59 9v14m-7-7h14"
+              stroke="currentColor"
+              strokeWidth="3"
+              strokeLinecap="round"
+            />
+            <circle cx="170" cy="77" r="4" fill="currentColor" />
+          </svg>
           <div className="workspace-profile">
-            <span className="local-badge">Local learning</span>
-            <span className="profile-avatar" aria-label="Guest learner">
-              EL
-            </span>
+            <div className="local-badge">
+              <span className="contact-feedback">feedback to me at ins:</span>
+              <span className="contact-donate">donate hay bị chan</span>
+              <span className="contact-bank">0933133496 vietinbank</span>
+            </div>
+            <a
+              className="profile-avatar"
+              href="https://www.instagram.com/t_minleo/"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Instagram t_minleo (opens in a new tab)"
+            >
+              <svg
+                width="22"
+                height="22"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.8"
+                aria-hidden="true"
+              >
+                <rect x="3" y="3" width="18" height="18" rx="5" />
+                <circle cx="12" cy="12" r="4" />
+                <circle
+                  cx="17.5"
+                  cy="6.5"
+                  r="1"
+                  fill="currentColor"
+                  stroke="none"
+                />
+              </svg>
+            </a>
           </div>
         </header>
         {settingsError && <p role="alert">{settingsError}</p>}
-        {view === 'dashboard' && <Dashboard repository={dashboard} />}
+        {view === 'dashboard' && (
+          <Dashboard
+            repository={dashboard}
+            streak={streak}
+            onNavigate={(destination) => {
+              if (destination === 'flashcards') setStudyOpened(true)
+              setView(destination)
+            }}
+          />
+        )}
         <div
           key={`vocabulary-${runtime.generation}`}
           hidden={view !== 'vocabulary'}
@@ -246,6 +326,21 @@ function LearningHub({
             />
           </div>
         )}
+        <footer className="app-footer">
+          <a
+            href="#"
+            onClick={(event) => {
+              event.preventDefault()
+              setView('dashboard')
+            }}
+          >
+            English Hub<span aria-hidden="true">.</span>
+          </a>
+          <p>
+            A little practice, every day. Your words. Your pace. Your progress.
+          </p>
+          <span>Made for curious minds.</span>
+        </footer>
       </div>
     </div>
   )

@@ -6,6 +6,31 @@
 .learning-dashboard .dashboard-heading {
   margin-bottom: 22px;
 }
+.dashboard-streak {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 20px;
+  margin-bottom: 24px;
+  border: 1px solid #f3d0a7;
+  border-radius: 19px;
+  background: #fff7ed;
+  color: #923b13;
+}
+.streak-fire {
+  font-size: 36px;
+  flex-shrink: 0;
+}
+.dashboard-streak h2 {
+  margin-bottom: 4px;
+}
+.dashboard-streak strong {
+  font-size: 26px;
+}
+.dashboard-streak p {
+  font-size: 12px;
+  margin: 4px 0 0;
+}
 .learning-dashboard .eyebrow {
   font-size: 10px;
   letter-spacing: 2px;

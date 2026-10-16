@@ -18,6 +18,8 @@ import {
   type PreviewRow,
 } from './xlsx'
 import { downloadXlsx, readUpload } from './browser'
+import { ExcelTemplatePreview } from './ExcelTemplatePreview'
+import { templateExamples } from './template'
 import './spreadsheet.css'
 
 interface Preview {
@@ -43,6 +45,7 @@ export default function SpreadsheetPanel({
   const [error, setError] = useState('')
   const [status, setStatus] = useState('')
   const [page, setPage] = useState(0)
+  const [templateOpen, setTemplateOpen] = useState(false)
   async function run(operation: () => Promise<void>) {
     setBusy(true)
     setError('')
@@ -133,6 +136,13 @@ export default function SpreadsheetPanel({
       <fieldset disabled={busy}>
         <div className="toolbar">
           <button
+            aria-expanded={templateOpen}
+            aria-controls="excel-template-preview"
+            onClick={() => setTemplateOpen((open) => !open)}
+          >
+            {templateOpen ? 'Hide Excel template' : 'Preview Excel template'}
+          </button>
+          <button
             onClick={() =>
               void run(async () => {
                 downloadXlsx(exportXlsx([]), 'vocabulary-template.xlsx')
@@ -141,6 +151,21 @@ export default function SpreadsheetPanel({
             }
           >
             Download blank template
+          </button>
+          <button
+            onClick={() =>
+              void run(async () => {
+                downloadXlsx(
+                  exportXlsx(templateExamples),
+                  'vocabulary-example.xlsx',
+                )
+                setStatus(
+                  'Example workbook downloaded. Replace the example rows with your own vocabulary before importing.',
+                )
+              })
+            }
+          >
+            Download example workbook
           </button>
           <button
             onClick={() =>
@@ -155,6 +180,7 @@ export default function SpreadsheetPanel({
           </button>
           <button onClick={close}>Close Excel tools</button>
         </div>
+        {templateOpen && <ExcelTemplatePreview />}
         <label className="upload-label">
           XLSX file
           <input

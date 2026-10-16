@@ -1,0 +1,567 @@
+/* Shared visual language for every learning feature, inspired by Academix. */
+.device-badge {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  padding: 9px 12px;
+  border: 1px solid #23594c;
+  border-radius: 999px;
+  color: var(--primary-dark);
+  font-size: 11px;
+  white-space: nowrap;
+}
+.device-badge > span {
+  color: var(--primary);
+  font-size: 8px;
+}
+.app-shell
+  :is(
+    .learning-dashboard,
+    .vocabulary-manager,
+    .flashcards,
+    .quiz-page,
+    .data-management
+  ) {
+  width: 100%;
+  max-width: 1440px;
+  padding: 36px 28px 64px;
+  min-height: 65svh;
+}
+.app-shell :is(.flashcards, .quiz-page, .data-management) {
+  max-width: 1120px;
+}
+.app-shell main > header {
+  max-width: 820px;
+  margin-bottom: 30px;
+}
+.app-shell main fieldset {
+  min-width: 0;
+}
+.app-shell main h1 {
+  font-size: clamp(30px, 4vw, 48px);
+  font-weight: 750;
+  letter-spacing: -1.8px;
+  line-height: 1.14;
+  margin: 10px 0 16px;
+}
+.app-shell main > header > p:not(.eyebrow) {
+  color: var(--text-muted);
+  line-height: 1.8;
+  font-size: 14px;
+}
+.app-shell .eyebrow {
+  color: var(--primary-dark);
+  letter-spacing: 2px;
+  font-size: 10px;
+  font-weight: 750;
+}
+.app-shell main :is(button, input, select, textarea) {
+  border-radius: 10px;
+}
+.app-shell
+  main
+  :is(button, input:not([type='checkbox'], [type='radio']), select) {
+  min-height: 44px;
+}
+.app-shell main button {
+  transition:
+    background-color 150ms,
+    border-color 150ms,
+    box-shadow 150ms,
+    transform 150ms;
+  box-shadow: inset 0 1px #ffffff06;
+  font-weight: 650;
+}
+.app-shell
+  main
+  button:hover:not(
+    :disabled,
+    .cell-value,
+    .card-flip,
+    .study-arrow,
+    [aria-pressed='true']
+  ) {
+  border-color: #3fa98f;
+  box-shadow: 0 5px 20px #00b69120;
+  transform: translateY(-1px);
+}
+.app-shell :is(.welcome-primary, .quiz-primary, .restart-confirm),
+.app-shell .toolbar > button:first-of-type {
+  box-shadow:
+    0 5px 18px #00b89428,
+    inset 0 1px #ffffff15;
+}
+.app-shell
+  :is(.welcome-primary, .quiz-primary, .restart-confirm):hover:not(:disabled),
+.app-shell .toolbar > button:first-of-type:hover:not(:disabled) {
+  background: #00806d;
+  border-color: #26bfa2;
+  box-shadow: 0 7px 26px #00b89440;
+}
+.app-shell :is(.quiz-letter, .quiz-score) {
+  color: var(--primary-dark);
+}
+.app-shell .quiz-option.quiz-correct {
+  background: linear-gradient(115deg, #153b20, #215b2f);
+  border-color: #62b778;
+  color: #effff1;
+}
+.app-shell .quiz-option.quiz-incorrect {
+  background: linear-gradient(115deg, #491c1a, #642521);
+  border-color: #d96860;
+  color: #fff0ec;
+}
+.app-shell .quiz-correct .quiz-letter {
+  background: #2c683d;
+  color: #c0f5c8;
+}
+.app-shell .quiz-incorrect .quiz-letter {
+  background: #853c34;
+  color: #ffe0d8;
+}
+.app-shell .flashcards .study-card .study-arrow {
+  background: #242c27f5;
+  color: #e1f6ef;
+}
+.app-shell .draft-note {
+  color: #edc08c;
+}
+.app-shell progress {
+  appearance: none;
+  height: 8px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--surface-tint);
+  overflow: hidden;
+}
+.app-shell progress::-webkit-progress-bar {
+  background: var(--surface-tint);
+}
+.app-shell progress::-webkit-progress-value {
+  background: var(--primary);
+}
+.app-shell progress::-moz-progress-bar {
+  background: var(--primary);
+}
+.app-shell .dashboard-streak {
+  padding: 14px 22px;
+  border-radius: 14px;
+  border-color: #684327;
+  background: #281e15;
+  color: #ffc18a;
+  margin-bottom: 26px;
+}
+.app-shell .dashboard-streak > div {
+  display: flex;
+  gap: 10px 18px;
+  flex-wrap: wrap;
+  align-items: baseline;
+}
+.app-shell .dashboard-streak h2,
+.app-shell .dashboard-streak p {
+  margin: 0;
+}
+.app-shell .dashboard-streak strong {
+  font-size: 22px;
+}
+.app-shell .streak-fire {
+  font-size: 28px;
+}
+.app-shell .dashboard-welcome {
+  min-height: 420px;
+  padding: 46px;
+  margin-bottom: 32px;
+  border: 1px solid #214b3d;
+  border-radius: 24px;
+  color: var(--text);
+  background:
+    radial-gradient(ellipse at 0 0, #00654d30, transparent 55%),
+    radial-gradient(ellipse at 100% 100%, #b351151c, transparent 50%),
+    radial-gradient(#b7c8bc13 0.7px, transparent 0.7px), #0e100d;
+  background-size:
+    auto,
+    auto,
+    18px 18px,
+    auto;
+}
+.app-shell .welcome-tag {
+  display: inline-block;
+  padding: 8px 14px;
+  border: 1px solid #1d6655;
+  border-radius: 999px;
+  background: #09231d;
+  color: var(--primary-dark);
+  font-size: 9px;
+  letter-spacing: 1.4px;
+}
+.app-shell .dashboard-welcome h2 {
+  font-size: clamp(32px, 3.6vw, 54px);
+  letter-spacing: -2px;
+  line-height: 1.12;
+  margin: 24px 0 20px;
+  font-weight: 750;
+}
+.app-shell .dashboard-welcome h2 > span {
+  color: #5ee1bc;
+  background: linear-gradient(100deg, #1dcba8, #95b37a 50%, #ff8247);
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.app-shell .dashboard-welcome p {
+  color: var(--text-muted);
+  font-size: 15px;
+  line-height: 1.8;
+}
+.welcome-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin: 26px 0;
+}
+.app-shell .welcome-actions button {
+  padding: 13px 20px;
+  border-color: var(--border);
+  font-size: 13px;
+  font-weight: 650;
+}
+.app-shell .welcome-actions .welcome-primary {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: white;
+  box-shadow: 0 6px 20px #00b89430;
+}
+.welcome-actions span {
+  margin-left: 12px;
+}
+.app-shell .welcome-summary {
+  width: fit-content;
+  padding: 12px 0 0;
+  border-radius: 0;
+  background: transparent;
+  border-top: 1px solid #007f7026;
+}
+.app-shell .welcome-number {
+  color: var(--primary-dark);
+}
+.app-shell .welcome-summary div > span {
+  color: var(--text-muted);
+}
+.app-shell .welcome-art {
+  width: 330px;
+  height: 300px;
+  margin-right: 28px;
+}
+.app-shell .art-orbit {
+  inset: 10px;
+  border-color: #007f7026;
+  box-shadow:
+    0 0 0 24px #007f7005,
+    0 0 0 48px #007f7004;
+}
+.app-shell .art-card {
+  width: 200px;
+  height: 230px;
+  border-radius: 18px;
+  box-shadow: 0 18px 35px #173e361c;
+}
+.app-shell .art-card-back {
+  top: 18px;
+  left: 10px;
+  background: var(--primary);
+  border-color: var(--primary);
+  color: white;
+}
+.app-shell .art-card-front {
+  top: 56px;
+  left: 110px;
+  background: #292824;
+  border: 1px solid var(--border);
+  color: var(--primary-dark);
+}
+.app-shell .art-card-front i {
+  margin-top: 46px;
+  color: var(--text-muted);
+}
+.app-shell .art-spark {
+  color: var(--accent);
+}
+.app-shell
+  :is(
+    .dashboard-stats,
+    .dashboard-panel,
+    .dashboard-metric,
+    .quiz-card,
+    .data-management section
+  ) {
+  border-color: var(--border);
+  border-radius: 18px;
+  box-shadow: 0 4px 18px #203c3105;
+}
+.app-shell .dashboard-stats {
+  padding: 26px;
+}
+.app-shell .dashboard-grid {
+  gap: 14px;
+  margin-top: 20px;
+}
+.app-shell .dashboard-metric {
+  padding: 20px;
+  background: #1c1d19;
+}
+.app-shell .dashboard-metric .dashboard-value {
+  color: var(--primary-dark);
+}
+.app-shell .dashboard-metric h2::before {
+  width: 28px;
+  height: 5px;
+  background: var(--primary);
+}
+.app-shell .dashboard-metric:nth-child(2n) h2::before {
+  background: var(--accent);
+}
+.app-shell .dashboard-panel p,
+.app-shell .dashboard-metric p {
+  font-size: 12px;
+  line-height: 1.8;
+}
+.app-shell .learning-dashboard meter::-webkit-meter-bar {
+  background: var(--surface-tint);
+}
+.app-shell .learning-dashboard meter::-webkit-meter-optimum-value {
+  background: var(--primary);
+}
+.app-shell .dashboard-activity li {
+  background: var(--surface-hover);
+  border: 1px solid var(--border);
+}
+.app-shell .vocabulary-manager > fieldset > .toolbar {
+  padding: 20px;
+  margin: 20px 0;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: var(--surface);
+  align-items: end;
+}
+.app-shell .table-scroll {
+  border-radius: 14px;
+  box-shadow: 0 4px 18px #203c3105;
+}
+.app-shell .vocabulary-manager .table-scroll {
+  color-scheme: dark;
+  --surface: #25252d;
+  --surface-tint: #1b1b22;
+  --surface-hover: #34343f;
+  --text: #e5e6eb;
+  --text-muted: #afb1bd;
+  --primary-dark: #a4d9e3;
+  --border: #363640;
+  --control-border: #626274;
+  --focus: #8dbeff;
+  --error-text: #ffadbc;
+  --error-bg: #391d27;
+  background: var(--surface);
+  color: var(--text);
+  border-color: var(--border);
+  scrollbar-color: #5b5b68 #1c1c22;
+}
+.app-shell .vocabulary-manager .table-scroll .draft-note {
+  color: #edc08c;
+}
+.app-shell .vocabulary-manager th {
+  background: #1c1c22;
+  color: #f0f0f5;
+  padding: 16px;
+  font-size: 12px;
+}
+.app-shell .vocabulary-manager :is(th, td) {
+  border-right: 0;
+  border-bottom: 3px solid #1b1b22;
+}
+.app-shell .vocabulary-manager tbody tr:nth-child(even) {
+  background: #292931;
+}
+.app-shell .vocabulary-manager tbody tr:hover,
+.app-shell .vocabulary-manager tbody tr:focus-within {
+  background: var(--surface-hover);
+}
+.app-shell .vocabulary-manager .cell-value {
+  border-radius: 0;
+  background: transparent;
+  font-weight: 400;
+  line-height: 1.7;
+}
+.app-shell .vocabulary-manager .editable-cell:first-child .cell-value {
+  font-weight: 600;
+  color: #f5f5fa;
+}
+.app-shell .vocabulary-manager .cell-value:hover {
+  background: var(--surface-hover);
+}
+.app-shell .spreadsheet-panel {
+  padding: 26px;
+  border: 1px solid #335546;
+  border-radius: 20px;
+  background: #161e19;
+}
+.app-shell .spreadsheet-panel > p {
+  max-width: 900px;
+  color: var(--text-muted);
+  line-height: 1.8;
+  font-size: 13px;
+}
+.app-shell .upload-label {
+  padding: 22px;
+  margin-top: 20px;
+  border: 1px dashed #426c58;
+  border-radius: 14px;
+  background: var(--surface);
+}
+.app-shell .study-toolbar,
+.app-shell .quiz-toolbar {
+  padding: 18px 20px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: var(--surface);
+  font-size: 13px;
+}
+.app-shell .study-front {
+  background:
+    radial-gradient(ellipse at 100% 0, #289c80, transparent 65%),
+    linear-gradient(135deg, #084d45, #007f70);
+}
+.app-shell .study-back {
+  background: linear-gradient(135deg, #222923, #142b22);
+}
+.app-shell .study-back::after {
+  background: #1f634d;
+  opacity: 0.25;
+}
+.app-shell .study-back .card-flip {
+  opacity: 1;
+}
+.app-shell .study-face {
+  border-color: #3d6f59;
+  box-shadow: 0 18px 50px #173e361f;
+}
+.app-shell .study-face::before {
+  border-color: #95d0b926;
+}
+.app-shell .quiz-card {
+  padding: 36px;
+}
+.app-shell .quiz-letter {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: var(--surface-tint);
+}
+.app-shell .quiz-option {
+  padding: 18px;
+}
+.app-shell .data-management section {
+  padding: 28px;
+}
+.app-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 20px;
+  padding: 30px max(28px, calc((100vw - 1384px) / 2));
+  border-top: 1px solid var(--border);
+  background: #10110e;
+  color: var(--text-muted);
+  font-size: 12px;
+}
+.app-footer a {
+  color: var(--text);
+  text-decoration: none;
+  font-size: 20px;
+  font-weight: 750;
+  letter-spacing: -0.7px;
+}
+.app-footer a > span {
+  color: var(--primary);
+}
+.app-footer :focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 4px;
+}
+@media (max-width: 1100px) {
+  .app-shell .welcome-art {
+    width: 260px;
+    transform: scale(0.85);
+    margin-right: 5px;
+  }
+  .app-shell .dashboard-welcome {
+    padding: 34px;
+  }
+}
+@media (max-width: 760px) {
+  .app-shell .welcome-art {
+    display: none;
+  }
+  .app-shell .dashboard-welcome {
+    min-height: 380px;
+  }
+  .app-shell .dashboard-welcome h2 {
+    font-size: clamp(34px, 6vw, 46px);
+  }
+}
+@media (max-width: 600px) {
+  .app-shell
+    :is(
+      .learning-dashboard,
+      .vocabulary-manager,
+      .flashcards,
+      .quiz-page,
+      .data-management
+    ) {
+    padding: 28px 16px 44px;
+  }
+  .app-shell .dashboard-welcome {
+    padding: 26px 22px;
+  }
+  .app-shell .dashboard-welcome h2 {
+    font-size: 34px;
+    letter-spacing: -1.4px;
+  }
+  .app-shell .dashboard-welcome p {
+    font-size: 13px;
+  }
+  .app-shell
+    :is(
+      .spreadsheet-panel,
+      .dashboard-stats,
+      .quiz-card,
+      .data-management section
+    ) {
+    padding: 18px;
+  }
+  .app-shell .dashboard-streak {
+    padding: 14px;
+    align-items: flex-start;
+  }
+  .app-shell .dashboard-streak p {
+    flex-basis: 100%;
+  }
+  .app-shell .dashboard-streak > div {
+    gap: 4px 12px;
+  }
+  .app-footer {
+    padding: 28px 16px;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .app-shell main button {
+    transition: none;
+  }
+  .app-shell main button:hover:not(.study-arrow) {
+    transform: none;
+  }
+}

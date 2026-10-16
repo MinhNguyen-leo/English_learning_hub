@@ -2,9 +2,18 @@ import { useEffect, useState } from 'react'
 import { calculateMetrics, type DashboardMetrics } from './metrics'
 import type { DashboardRepository } from './repository'
 import { MetricCard } from './MetricCard'
+import type { VisitStreak } from './useVisitStreak'
 import './dashboard.css'
 
-export function Dashboard({ repository }: { repository: DashboardRepository }) {
+export function Dashboard({
+  repository,
+  streak,
+  onNavigate,
+}: {
+  repository: DashboardRepository
+  streak?: VisitStreak
+  onNavigate?: (destination: 'vocabulary' | 'flashcards') => void
+}) {
   const [metrics, setMetrics] = useState<DashboardMetrics | null>(null)
   const [error, setError] = useState('')
   const [attempt, setAttempt] = useState(0)
@@ -39,15 +48,59 @@ export function Dashboard({ repository }: { repository: DashboardRepository }) {
         <p className="eyebrow">YOUR LEARNING</p>
         <h1>Learning Dashboard</h1>
       </header>
+      {streak && (
+        <section className="dashboard-streak" aria-label="Visit streak">
+          <span className="streak-fire" aria-hidden="true">
+            🔥
+          </span>
+          <div>
+            <h2>Visit streak</h2>
+            <strong>
+              {streak.error
+                ? 'Unavailable'
+                : streak.days === null
+                  ? 'Loading…'
+                  : `${streak.days} ${streak.days === 1 ? 'day' : 'days'}`}
+            </strong>
+            <p>
+              Consecutive days visiting this website. Come back daily to keep
+              your streak!
+            </p>
+            {streak.error && (
+              <div role="alert">
+                <p>{streak.error}</p>
+                <button onClick={streak.retry}>Retry streak</button>
+              </div>
+            )}
+          </div>
+        </section>
+      )}
       <section className="dashboard-welcome" aria-labelledby="welcome-title">
         <div>
           <span className="welcome-tag">A LITTLE BETTER EVERY DAY</span>
-          <h2 id="welcome-title">Welcome back, learner!</h2>
+          <h2 id="welcome-title">
+            <span>Grow your vocabulary.</span>
+            <br />
+            Open up your world.
+          </h2>
           <p>
-            Grow your vocabulary, build your confidence.
+            A new word today. A little more confidence tomorrow.
             <br />
             Your next learning moment starts here.
           </p>
+          {onNavigate && (
+            <div className="welcome-actions">
+              <button
+                className="welcome-primary"
+                onClick={() => onNavigate('vocabulary')}
+              >
+                Explore vocabulary <span aria-hidden="true">↗</span>
+              </button>
+              <button onClick={() => onNavigate('flashcards')}>
+                Practice flashcards <span aria-hidden="true">→</span>
+              </button>
+            </div>
+          )}
           <div className="welcome-summary">
             <span className="welcome-number">
               {metrics ? metrics.total : '—'}
