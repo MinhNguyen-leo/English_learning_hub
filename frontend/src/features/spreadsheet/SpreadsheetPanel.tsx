@@ -1,3 +1,4 @@
+import { useUiText } from '../../lib/useUiText'
 import { useState } from 'react'
 import {
   duplicateKey,
@@ -21,6 +22,7 @@ import { downloadXlsx, readUpload } from './browser'
 import { ExcelTemplatePreview } from './ExcelTemplatePreview'
 import { templateExamples } from './template'
 import './spreadsheet.css'
+import { MAX_IMPORT_ROWS } from '../vocabulary/importPlan'
 
 interface Preview {
   rows: PreviewRow[]
@@ -36,6 +38,8 @@ export default function SpreadsheetPanel({
   onClose: () => void
   onImported: (rows: Vocabulary[]) => void
 }) {
+  const t = useUiText()
+
   const [sheet, setSheet] = useState<ParsedSheet | null>(null)
   const [mapping, setMapping] = useState<ColumnMapping | null>(null)
   const [preview, setPreview] = useState<Preview | null>(null)
@@ -114,7 +118,9 @@ export default function SpreadsheetPanel({
     if (
       sheet &&
       !window.confirm(
-        'Close Excel tools and discard this import preview? No imported data has been saved.',
+        t(
+          'Close Excel tools and discard this import preview? No imported data has been saved.',
+        ),
       )
     )
       return
@@ -122,16 +128,24 @@ export default function SpreadsheetPanel({
   }
   return (
     <section className="spreadsheet-panel" aria-labelledby="excel-heading">
-      <h2 id="excel-heading">Excel import and export</h2>
-      <p>
-        Upload a macro-free .xlsx file, up to 5 MiB, with headers in row 1. Only
-        the first worksheet is used: at most 5,000 data rows (including blanks)
-        and 64 columns. Formula cells are invalid and never evaluated.
+      <h2 id="excel-heading">{t('Excel import and export')}</h2>
+      <p className="import-row-limit">
+        <strong>
+          {t(
+            'Import up to {{value0}} vocabulary rows per XLSX file (excluding the header row).',
+            { value0: MAX_IMPORT_ROWS.toLocaleString() },
+          )}
+        </strong>
       </p>
       <p>
-        Template and export contain all eight vocabulary text fields. Internal
-        IDs and timestamps are omitted. Export includes the entire saved
-        library, regardless of table filters.
+        {t(
+          'Upload a macro-free .xlsx file, up to 5 MiB, with headers in row 1. Only the first worksheet is used: at most 5,000 data rows (including blanks) and 64 columns. Formula cells are invalid and never evaluated.',
+        )}
+      </p>
+      <p>
+        {t(
+          'Template and export contain all eight vocabulary text fields. Internal IDs and timestamps are omitted. Export includes the entire saved library, regardless of table filters.',
+        )}
       </p>
       <fieldset disabled={busy}>
         <div className="toolbar">
@@ -140,7 +154,9 @@ export default function SpreadsheetPanel({
             aria-controls="excel-template-preview"
             onClick={() => setTemplateOpen((open) => !open)}
           >
-            {templateOpen ? 'Hide Excel template' : 'Preview Excel template'}
+            {templateOpen
+              ? t('Hide Excel template')
+              : t('Preview Excel template')}
           </button>
           <button
             onClick={() =>
@@ -150,7 +166,7 @@ export default function SpreadsheetPanel({
               })
             }
           >
-            Download blank template
+            {t('Download blank template')}
           </button>
           <button
             onClick={() =>
@@ -165,7 +181,7 @@ export default function SpreadsheetPanel({
               })
             }
           >
-            Download example workbook
+            {t('Download example workbook')}
           </button>
           <button
             onClick={() =>
@@ -176,13 +192,13 @@ export default function SpreadsheetPanel({
               })
             }
           >
-            Export all vocabulary
+            {t('Export all vocabulary')}
           </button>
-          <button onClick={close}>Close Excel tools</button>
+          <button onClick={close}>{t('Close Excel tools')}</button>
         </div>
         {templateOpen && <ExcelTemplatePreview />}
         <label className="upload-label">
-          XLSX file
+          {t('XLSX file')}
           <input
             type="file"
             accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
@@ -200,22 +216,29 @@ export default function SpreadsheetPanel({
         </label>
         {sheet && mapping && (
           <>
-            <h3>1. Map columns — {sheet.name}</h3>
+            <h3>
+              {t('1. Map columns —')} {sheet.name}
+            </h3>
             {sheet.warnings.map((warning) => (
-              <p key={warning}>{warning}</p>
+              <p key={warning}>{t(warning)}</p>
             ))}
             <p>
-              Map Word and at least one meaning. Optional fields may be ignored.
-              Source column letters distinguish repeated headers. {ignored}{' '}
-              unmapped columns will be ignored; formulas and invalid cell types
-              still mark a row invalid.
+              {t(
+                'Map Word and at least one meaning. Optional fields may be ignored. Source column letters distinguish repeated headers.',
+              )}{' '}
+              {ignored}{' '}
+              {t(
+                'unmapped columns will be ignored; formulas and invalid cell types still mark a row invalid.',
+              )}
             </p>
             <div className="column-mapping">
               {fieldNames.map((key) => (
                 <label key={key}>
-                  {fields[key].label}
+                  {t(fields[key].label)}
                   <select
-                    aria-label={`Map ${fields[key].label}`}
+                    aria-label={t('Map {{value0}}', {
+                      value0: t(fields[key].label),
+                    })}
                     disabled={preview !== null}
                     value={mapping[key] ?? ''}
                     onChange={(event) =>
@@ -228,10 +251,10 @@ export default function SpreadsheetPanel({
                       })
                     }
                   >
-                    <option value="">Do not import</option>
+                    <option value="">{t('Do not import')}</option>
                     {sheet.headers.map((header, index) => (
                       <option key={index} value={index}>
-                        {columnLabel(index)}: {header || '(blank header)'}
+                        {columnLabel(index)}: {header || t('(blank header)')}
                       </option>
                     ))}
                   </select>
@@ -241,7 +264,7 @@ export default function SpreadsheetPanel({
             {mappingIssues.length > 0 && (
               <ul>
                 {mappingIssues.map((issue) => (
-                  <li key={issue}>{issue}</li>
+                  <li key={issue}>{t(issue)}</li>
                 ))}
               </ul>
             )}
@@ -250,49 +273,47 @@ export default function SpreadsheetPanel({
                 disabled={mappingIssues.length > 0}
                 onClick={() => void makePreview()}
               >
-                Preview import
+                {t('Preview import')}
               </button>
             )}
           </>
         )}
         {preview && plan && (
           <>
-            <h3>2. Review and import</h3>
+            <h3>{t('2. Review and import')}</h3>
             <p>
-              {valid.length} valid rows; {invalidCount} invalid rows;{' '}
-              {plan.duplicates} duplicate rows (within this file or the saved
-              library).
+              {valid.length} {t('valid rows;')} {invalidCount}{' '}
+              {t('invalid rows;')} {plan.duplicates}{' '}
+              {t('duplicate rows (within this file or the saved library).')}
             </p>
             <label>
-              Duplicate handling
+              {t('Duplicate handling')}
               <select
-                aria-label="Duplicate handling"
+                aria-label={t('Duplicate handling')}
                 value={policy}
                 onChange={(event) =>
                   setPolicy(event.target.value as DuplicatePolicy)
                 }
               >
-                <option value="skip">Skip duplicates</option>
-                <option value="replace">Replace duplicates</option>
+                <option value="skip">{t('Skip duplicates')}</option>
+                <option value="replace">{t('Replace duplicates')}</option>
                 <option value="keep">
-                  Keep duplicates as separate entries
+                  {t('Keep duplicates as separate entries')}
                 </option>
               </select>
             </label>
             <p>
-              Duplicates match word, part of speech, English meaning and
-              Vietnamese meaning after Unicode NFC normalization, trimming and
-              lowercasing. Skip keeps the first entry. Replace updates all
-              matching entries, preserves their IDs and creation dates, and uses
-              the last valid file row. Empty optional fields in replacement rows
-              clear saved values. Keep creates a separate entry for every valid
-              row.
+              {t(
+                'Duplicates match word, part of speech, English meaning and Vietnamese meaning after Unicode NFC normalization, trimming and lowercasing. Skip keeps the first entry. Replace updates all matching entries, preserves their IDs and creation dates, and uses the last valid file row. Empty optional fields in replacement rows clear saved values. Keep creates a separate entry for every valid row.',
+              )}
             </p>
             <p>
-              Planned changes:{' '}
-              {plan.writes.filter((write) => !write.original).length} additions,{' '}
-              {plan.writes.filter((write) => write.original).length} existing
-              entries replaced, {plan.skipped} duplicate rows skipped.
+              {t('Planned changes:')}{' '}
+              {plan.writes.filter((write) => !write.original).length}{' '}
+              {t('additions,')}{' '}
+              {plan.writes.filter((write) => write.original).length}{' '}
+              {t('existing entries replaced,')} {plan.skipped}{' '}
+              {t('duplicate rows skipped.')}
             </p>
             {invalidCount > 0 && (
               <label className="invalid-consent">
@@ -301,28 +322,29 @@ export default function SpreadsheetPanel({
                   checked={skipInvalid}
                   onChange={(event) => setSkipInvalid(event.target.checked)}
                 />{' '}
-                Import valid rows only and skip {invalidCount} invalid rows
+                {t('Import valid rows only and skip')} {invalidCount}{' '}
+                {t('invalid rows')}
               </label>
             )}
             <div
               className="table-scroll"
               role="region"
-              aria-label="Import preview"
+              aria-label={t('Import preview')}
               tabIndex={0}
             >
               <table>
                 <caption>
-                  Import preview with original worksheet row numbers
+                  {t('Import preview with original worksheet row numbers')}
                 </caption>
                 <thead>
                   <tr>
-                    <th scope="col">Row</th>
+                    <th scope="col">{t('Row')}</th>
                     {fieldNames.map((key) => (
                       <th scope="col" key={key}>
-                        {fields[key].label}
+                        {t(fields[key].label)}
                       </th>
                     ))}
-                    <th scope="col">Validation</th>
+                    <th scope="col">{t('Validation')}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -336,29 +358,43 @@ export default function SpreadsheetPanel({
                         ))}
                         <td>
                           {row.errors.length
-                            ? `Invalid: ${row.errors.join(' ')}`
+                            ? t('Invalid: {{value0}}', {
+                                value0: row.errors
+                                  .map((issue) => t(issue))
+                                  .join(' '),
+                              })
                             : row.duplicate
-                              ? `Duplicate: ${policy}`
-                              : 'Valid: new entry'}
+                              ? t('Duplicate: {{value0}}', {
+                                  value0: t(
+                                    policy === 'skip'
+                                      ? 'Skip duplicates'
+                                      : policy === 'replace'
+                                        ? 'Replace duplicates'
+                                        : 'Keep duplicates as separate entries',
+                                  ),
+                                })
+                              : t('Valid: new entry')}
                         </td>
                       </tr>
                     ))}
                 </tbody>
               </table>
             </div>
-            {!annotated.length && <p>No nonblank data rows were found.</p>}
+            {!annotated.length && (
+              <p>{t('No nonblank data rows were found.')}</p>
+            )}
             <div className="toolbar">
               <button disabled={page === 0} onClick={() => setPage(page - 1)}>
-                Previous rows
+                {t('Previous rows')}
               </button>
               <span>
-                Page {page + 1} of {pages}
+                {t('Page')} {page + 1} {t('of')} {pages}
               </span>
               <button
                 disabled={page + 1 >= pages}
                 onClick={() => setPage(page + 1)}
               >
-                Next rows
+                {t('Next rows')}
               </button>
             </div>
             <div className="toolbar">
@@ -369,10 +405,10 @@ export default function SpreadsheetPanel({
                   setStatus('Adjust mapping, then preview again.')
                 }}
               >
-                Change mapping
+                {t('Change mapping')}
               </button>
               <button onClick={() => void makePreview()}>
-                Refresh preview
+                {t('Refresh preview')}
               </button>
               <button
                 disabled={
@@ -389,23 +425,23 @@ export default function SpreadsheetPanel({
                   })
                 }
               >
-                Confirm import
+                {t('Confirm import')}
               </button>
             </div>
             <p>
-              No entries change until Confirm import succeeds. All planned
-              changes are committed in one transaction. If the library changes,
-              refresh this preview first.
+              {t(
+                'No entries change until Confirm import succeeds. All planned changes are committed in one transaction. If the library changes, refresh this preview first.',
+              )}
             </p>
           </>
         )}
       </fieldset>
       {error && (
         <p role="alert" className="error">
-          {error}
+          {t(error)}
         </p>
       )}
-      <p role="status">{busy ? 'Processing Excel file…' : status}</p>
+      <p role="status">{busy ? t('Processing Excel file…') : t(status)}</p>
     </section>
   )
 }

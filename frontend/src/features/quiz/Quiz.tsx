@@ -1,3 +1,4 @@
+import { useUiText } from '../../lib/useUiText'
 import { useEffect, useRef, useState } from 'react'
 import type { VocabularyRepository } from '../vocabulary/repository'
 import { generateQuiz, type QuizSize } from './generator'
@@ -24,6 +25,8 @@ export function Quiz({
   progress: QuizProgressRepository
   active?: boolean
 }) {
+  const t = useUiText()
+
   const [saved, setSaved] = useState<SavedQuiz | null>(null)
   const [size, setSize] = useState<QuizSize>(initialSize)
   const [reviewMode, setReviewMode] = useState(false)
@@ -82,7 +85,9 @@ export function Quiz({
     if (
       saved &&
       !window.confirm(
-        'Start a new quiz? This replaces your saved quiz and review progress.',
+        t(
+          'Start a new quiz? This replaces your saved quiz and review progress.',
+        ),
       )
     )
       return
@@ -135,7 +140,7 @@ export function Quiz({
   const question = session?.questions[session.index]
   const submitted = session?.answers[session.index] ?? null
   const results = session ? quizResults(session) : null
-  const advanceDelay = submitted === question?.correctIndex ? 1500 : 2500
+  const advanceDelay = submitted === question?.correctIndex ? 2000 : 3000
   useEffect(() => {
     if (restoreQuestionFocus.current && active) {
       questionHeading.current?.focus()
@@ -166,20 +171,21 @@ export function Quiz({
   return (
     <main className="quiz-page" ref={quizRoot}>
       <header>
-        <p className="eyebrow">ENGLISH LEARNING HUB / VOCABULARY QUIZ</p>
-        <h1>Test your vocabulary</h1>
+        <p className="eyebrow">{t('ENGLISH LEARNING HUB / VOCABULARY QUIZ')}</p>
+        <h1>{t('Test your vocabulary')}</h1>
         <p>
-          Choose the English meaning. Each word appears once; questions and
-          answer positions stay fixed throughout your quiz.
+          {t(
+            'Choose the English meaning. Each word appears once; questions and answer positions stay fixed throughout your quiz.',
+          )}
         </p>
       </header>
       {loading ? (
-        <p role="status">Loading saved quiz…</p>
+        <p role="status">{t('Loading saved quiz…')}</p>
       ) : (
         <>
           <div className="quiz-toolbar">
             <label>
-              Study mode
+              {t('Study mode')}
               <select
                 value={reviewMode ? 'review' : 'random'}
                 disabled={busy}
@@ -187,12 +193,12 @@ export function Quiz({
                   setReviewMode(event.target.value === 'review')
                 }
               >
-                <option value="random">Random study</option>
-                <option value="review">Review mistakes first</option>
+                <option value="random">{t('Random study')}</option>
+                <option value="review">{t('Review mistakes first')}</option>
               </select>
             </label>
             <label>
-              Quiz size
+              {t('Quiz size')}
               <select
                 value={size}
                 disabled={busy}
@@ -205,14 +211,14 @@ export function Quiz({
                   onSizeChange?.(next)
                 }}
               >
-                <option value={10}>10 questions</option>
-                <option value={20}>20 questions</option>
-                <option value={50}>50 questions</option>
-                <option value="all">All eligible questions</option>
+                <option value={10}>{t('10 questions')}</option>
+                <option value={20}>{t('20 questions')}</option>
+                <option value={50}>{t('50 questions')}</option>
+                <option value="all">{t('All eligible questions')}</option>
               </select>
             </label>
             <button disabled={busy || !ready} onClick={start}>
-              {session ? 'Start new quiz' : 'Start quiz'}
+              {session ? t('Start new quiz') : t('Start quiz')}
             </button>
             <button
               disabled={busy}
@@ -226,7 +232,7 @@ export function Quiz({
                 })
               }
             >
-              Reload saved quiz
+              {t('Reload saved quiz')}
             </button>
           </div>
           <label className="quiz-auto-advance">
@@ -235,50 +241,55 @@ export function Quiz({
               checked={autoAdvanceEnabled}
               onChange={(event) => setAutoAdvanceEnabled(event.target.checked)}
             />{' '}
-            Automatically advance after feedback
+            {t('Automatically advance after feedback')}
           </label>
           {reviewMode && (
             <p className="quiz-help">
-              New quizzes prioritize incorrect words from your saved quiz, then
-              random eligible words. No due dates are stored; this is not
-              overdue scheduling. Ambiguous words may still be skipped.
+              {t(
+                'New quizzes prioritize incorrect words from your saved quiz, then random eligible words. No due dates are stored; this is not overdue scheduling. Ambiguous words may still be skipped.',
+              )}
             </p>
           )}
           <p className="quiz-help">
-            Needs at least four distinct, unrelated English meanings. Similar
-            parts of speech and #tags in notes are preferred. Ambiguous choices
-            are excluded using spelling, meaning overlap and known or declared
-            synonyms.
+            {t(
+              'Needs at least four distinct, unrelated English meanings. Similar parts of speech and #tags in notes are preferred. Ambiguous choices are excluded using spelling, meaning overlap and known or declared synonyms.',
+            )}
           </p>
           {!ready && (
             <p>
-              Load saved progress successfully before starting a quiz. Use
-              Reload saved quiz to retry.
+              {t(
+                'Load saved progress successfully before starting a quiz. Use Reload saved quiz to retry.',
+              )}
             </p>
           )}
           {error && (
             <p role="alert" className="error">
-              {error}
+              {t(error)}
             </p>
           )}
-          <p role="status">{busy ? 'Saving / loading…' : status}</p>
+          <p role="status">{busy ? t('Saving / loading…') : t(status)}</p>
           {session && question && results && (
             <>
               {session.requestedSize !== 'all' &&
                 session.questions.length < session.requestedSize && (
                   <p>
-                    Only {session.eligibleCount} words have enough safe
-                    distractors. This quiz uses all {session.questions.length}{' '}
-                    eligible questions.
+                    {t('Only')} {session.eligibleCount}{' '}
+                    {t(
+                      'words have enough safe distractors. This quiz uses all',
+                    )}{' '}
+                    {session.questions.length} {t('eligible questions.')}
                   </p>
                 )}
               {session.finished ? (
-                <section className="quiz-card" aria-label="Quiz results">
-                  <h2>Quiz complete</h2>
+                <section className="quiz-card" aria-label={t('Quiz results')}>
+                  <h2>{t('Quiz complete')}</h2>
                   <p className="quiz-score">
-                    Score: {results.correct} / {results.total}
+                    {t('Score:')} {results.correct} / {results.total}
                   </p>
-                  <h3>Missed vocabulary ({results.missed.length})</h3>
+                  <h3>
+                    {t('Missed vocabulary (')}
+                    {results.missed.length})
+                  </h3>
                   {results.missed.length ? (
                     <ul className="quiz-missed">
                       {results.missed.map((word) => (
@@ -292,33 +303,37 @@ export function Quiz({
                       ))}
                     </ul>
                   ) : (
-                    <p>No missed words. Well done!</p>
+                    <p>{t('No missed words. Well done!')}</p>
                   )}
                   <button
                     disabled={busy}
                     onClick={() => act({ type: 'review' })}
                   >
-                    Review answers
+                    {t('Review answers')}
                   </button>
                 </section>
               ) : (
                 <>
                   <p>
-                    Question {session.index + 1} of {session.questions.length} ·
-                    Score: {results.correct} / {results.answered} answered
+                    {t('Question')} {session.index + 1} {t('of')}{' '}
+                    {session.questions.length} {t('· Score:')} {results.correct}{' '}
+                    / {results.answered} {t('answered')}
                   </p>
-                  <section className="quiz-card" aria-label="Quiz question">
+                  <section
+                    className="quiz-card"
+                    aria-label={t('Quiz question')}
+                  >
                     <h2 ref={questionHeading} tabIndex={-1}>
                       {question.target.word}
                     </h2>
-                    <p>Which English meaning matches this word?</p>
+                    <p>{t('Which English meaning matches this word?')}</p>
                     <p className="quiz-help">
-                      Click an answer to submit. With a keyboard, use arrow keys
-                      to choose, then Tab to Submit selected answer. Turn off
-                      automatic advance for more reading time.
+                      {t(
+                        'Click an answer to submit. With a keyboard, use arrow keys to choose, then Tab to Submit selected answer. Turn off automatic advance for more reading time.',
+                      )}
                     </p>
                     <fieldset disabled={busy || submitted !== null}>
-                      <legend className="sr-only">Answer options</legend>
+                      <legend className="sr-only">{t('Answer options')}</legend>
                       <div className="quiz-options">
                         {question.options.map((option, index) => (
                           <label
@@ -353,14 +368,29 @@ export function Quiz({
                             <span className="quiz-letter" aria-hidden="true">
                               {String.fromCharCode(65 + index)}
                             </span>
-                            <span>{option}</span>
+                            <span className="quiz-answer-text">
+                              <span>{option}</span>
+                              {submitted !== null && (
+                                <small className="quiz-answer-translation">
+                                  {question.translations?.[index] ||
+                                    (index === question.correctIndex
+                                      ? question.target.vietnamese_meaning
+                                      : session.questions.find(
+                                          (entry) =>
+                                            entry.target.english_meaning ===
+                                            option,
+                                        )?.target.vietnamese_meaning) ||
+                                    t('Not provided')}
+                                </small>
+                              )}
+                            </span>
                             {submitted !== null &&
                               index === question.correctIndex && (
-                                <strong>Correct answer</strong>
+                                <strong>{t('Correct answer')}</strong>
                               )}
                             {submitted === index &&
                               index !== question.correctIndex && (
-                                <strong>Your answer</strong>
+                                <strong>{t('Your answer')}</strong>
                               )}
                           </label>
                         ))}
@@ -374,15 +404,15 @@ export function Quiz({
                           act({ type: 'submit', choice: selected })
                         }
                       >
-                        Submit selected answer
+                        {t('Submit selected answer')}
                       </button>
                     )}
                     {submitted !== null ? (
                       <p className="quiz-feedback" role="status">
                         {submitted === question.correctIndex
-                          ? 'Correct!'
-                          : 'Not quite.'}{' '}
-                        Correct answer:{' '}
+                          ? t('Correct!')
+                          : t('Not quite.')}{' '}
+                        {t('Correct answer:')}{' '}
                         {question.options[question.correctIndex]}
                       </p>
                     ) : null}
@@ -395,7 +425,9 @@ export function Quiz({
                         <div
                           className="quiz-countdown"
                           role="img"
-                          aria-label="Thời gian còn lại trước khi tự chuyển câu"
+                          aria-label={t(
+                            'Thời gian còn lại trước khi tự chuyển câu',
+                          )}
                         >
                           <span
                             key={`${session.id}-${session.index}`}
@@ -405,48 +437,48 @@ export function Quiz({
                         </div>
                       )}
                   </section>
-                  <div className="quiz-toolbar">
+                  <div className="quiz-toolbar quiz-navigation">
                     <button
                       disabled={busy || session.index === 0}
                       onClick={() => act({ type: 'previous' })}
                     >
-                      Previous question
+                      {t('Previous question')}
                     </button>
                     {session.index < session.questions.length - 1 ? (
                       <button
                         disabled={busy || submitted === null}
                         onClick={() => act({ type: 'next' })}
                       >
-                        Next question
+                        {t('Next question')}
                       </button>
                     ) : (
                       <button
                         disabled={busy || submitted === null}
                         onClick={() => act({ type: 'finish' })}
                       >
-                        Finish quiz
+                        {t('Finish quiz')}
                       </button>
                     )}
                   </div>
                   <progress
-                    aria-label="Quiz completion"
+                    aria-label={t('Quiz completion')}
                     value={results.answered}
                     max={results.total}
                   />
                   <p>
-                    Missed so far: {results.missed.length}. Submitted answers
-                    are locked; revisit any answered question to review its
-                    correct answer.
+                    {t('Missed so far:')} {results.missed.length}
+                    {t(
+                      '. Submitted answers are locked; revisit any answered question to review its correct answer.',
+                    )}
                   </p>
                 </>
               )}
             </>
           )}
           <p className="quiz-help">
-            Submitted answers and review progress are saved in this browser.
-            Clearing browser storage removes them. Rule-based similarity checks
-            cannot recognize every possible paraphrase; clear definitions and
-            accurate synonyms improve question quality.
+            {t(
+              'Submitted answers and review progress are saved in this browser. Clearing browser storage removes them. Rule-based similarity checks cannot recognize every possible paraphrase; clear definitions and accurate synonyms improve question quality.',
+            )}
           </p>
         </>
       )}

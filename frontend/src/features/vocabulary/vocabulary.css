@@ -78,6 +78,22 @@
   border-collapse: collapse;
   font-size: 0.875rem;
 }
+.table-top-scroll {
+  height: 22px;
+  overflow-x: scroll;
+  overflow-y: hidden;
+  margin-top: 16px;
+  border: 1px solid var(--control-border);
+  border-radius: 6px;
+  background: var(--surface);
+  scrollbar-color: var(--primary-dark) var(--surface);
+}
+.table-top-scroll > div {
+  height: 1px;
+}
+.table-top-scroll + .table-scroll {
+  margin-top: 4px;
+}
 .vocabulary-manager th {
   background: var(--surface-tint);
   text-align: left;
@@ -104,6 +120,23 @@
 }
 .vocabulary-manager td.editable-cell {
   padding: 0;
+}
+.vocabulary-manager :is(th, td):nth-child(2) {
+  width: 420px;
+  min-width: 360px;
+  max-width: 560px;
+}
+.vocabulary-manager td:nth-child(2) textarea {
+  min-width: 320px;
+}
+.vocabulary-manager :is(th, td):nth-child(4) {
+  width: 148px;
+  min-width: 132px;
+  max-width: 170px;
+  padding-inline: 8px;
+}
+.vocabulary-manager td:nth-child(4) .pos-picker {
+  min-width: 132px;
 }
 .vocabulary-manager .cell-value {
   display: block;

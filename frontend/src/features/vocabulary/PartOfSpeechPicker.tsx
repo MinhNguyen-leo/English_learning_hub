@@ -1,3 +1,4 @@
+import { useUiText } from '../../lib/useUiText'
 import { useId, useLayoutEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 
@@ -13,13 +14,17 @@ const options = [
   'Other',
 ]
 export function PartOfSpeechBadge({ value }: { value: string }) {
+  const t = useUiText()
+
   return (
     <span
       className={`pos-badge pos-${options.find((option) => option.toLowerCase() === value.trim().toLowerCase())?.toLowerCase() ?? 'other'}`}
     >
-      {options.find(
-        (option) => option.toLowerCase() === value.trim().toLowerCase(),
-      ) ?? value}
+      {t(
+        options.find(
+          (option) => option.toLowerCase() === value.trim().toLowerCase(),
+        ),
+      ) || value}
     </span>
   )
 }
@@ -40,6 +45,8 @@ export function PartOfSpeechPicker({
   title: string | undefined
   error: string | undefined
 }) {
+  const t = useUiText()
+
   const id = useId()
   const input = useRef<HTMLInputElement>(null)
   const [open, setOpen] = useState(false)
@@ -51,8 +58,10 @@ export function PartOfSpeechPicker({
     width: 220,
     maxHeight: 360,
   })
-  const matches = options.filter((option) =>
-    option.toLowerCase().includes(query.trim().toLowerCase()),
+  const matches = options.filter(
+    (option) =>
+      option.toLowerCase().includes(query.trim().toLowerCase()) ||
+      t(option).toLocaleLowerCase().includes(query.trim().toLocaleLowerCase()),
   )
   const choices = [
     ...matches.map((label) => ({ label, value: label.toLowerCase() })),
@@ -60,7 +69,12 @@ export function PartOfSpeechPicker({
     !options.some(
       (option) => option.toLowerCase() === query.trim().toLowerCase(),
     )
-      ? [{ label: `Use “${query.trim()}”`, value: query.trim() }]
+      ? [
+          {
+            label: t('Use “{{value0}}”', { value0: query.trim() }),
+            value: query.trim(),
+          },
+        ]
       : []),
     { label: 'Clear', value: '' },
   ]
@@ -101,7 +115,7 @@ export function PartOfSpeechPicker({
       <input
         ref={input}
         role="combobox"
-        aria-label="Part of speech"
+        aria-label={t('Part of speech')}
         aria-expanded={open && !disabled}
         aria-controls={open && !disabled ? id : undefined}
         aria-autocomplete="list"
@@ -115,7 +129,9 @@ export function PartOfSpeechPicker({
         disabled={disabled}
         title={title}
         value={open ? query : value}
-        placeholder={open ? 'Search parts of speech…' : 'Choose part of speech'}
+        placeholder={
+          open ? t('Search parts of speech…') : t('Choose part of speech')
+        }
         maxLength={200}
         onFocus={() => {
           setQuery('')
@@ -167,7 +183,7 @@ export function PartOfSpeechPicker({
           <div
             className="pos-menu"
             role="listbox"
-            aria-label="Parts of speech"
+            aria-label={t('Parts of speech')}
             id={id}
             style={{ position: 'fixed', ...position }}
           >
@@ -187,13 +203,15 @@ export function PartOfSpeechPicker({
                 {choice.value ? (
                   <PartOfSpeechBadge
                     value={
-                      choice.label.startsWith('Use')
-                        ? choice.label
-                        : choice.value
+                      options.some(
+                        (option) => option.toLowerCase() === choice.value,
+                      )
+                        ? choice.value
+                        : choice.label
                     }
                   />
                 ) : (
-                  <span>Clear</span>
+                  <span>{t('Clear')}</span>
                 )}
                 {value.trim().toLowerCase() === choice.value.toLowerCase() && (
                   <span aria-hidden="true">✓</span>

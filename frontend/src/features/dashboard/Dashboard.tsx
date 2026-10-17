@@ -1,3 +1,4 @@
+import { useUiText } from '../../lib/useUiText'
 import { useEffect, useState } from 'react'
 import { calculateMetrics, type DashboardMetrics } from './metrics'
 import type { DashboardRepository } from './repository'
@@ -14,6 +15,8 @@ export function Dashboard({
   streak?: VisitStreak
   onNavigate?: (destination: 'vocabulary' | 'flashcards') => void
 }) {
+  const t = useUiText()
+
   const [metrics, setMetrics] = useState<DashboardMetrics | null>(null)
   const [error, setError] = useState('')
   const [attempt, setAttempt] = useState(0)
@@ -45,31 +48,35 @@ export function Dashboard({
   return (
     <main className="learning-dashboard">
       <header className="dashboard-heading">
-        <p className="eyebrow">YOUR LEARNING</p>
-        <h1>Learning Dashboard</h1>
+        <p className="eyebrow">{t('YOUR LEARNING')}</p>
+        <h1>{t('Learning Dashboard')}</h1>
       </header>
       {streak && (
-        <section className="dashboard-streak" aria-label="Visit streak">
+        <section className="dashboard-streak" aria-label={t('Visit streak')}>
           <span className="streak-fire" aria-hidden="true">
             🔥
           </span>
           <div>
-            <h2>Visit streak</h2>
+            <h2>{t('Visit streak')}</h2>
             <strong>
               {streak.error
-                ? 'Unavailable'
+                ? t('Unavailable')
                 : streak.days === null
-                  ? 'Loading…'
-                  : `${streak.days} ${streak.days === 1 ? 'day' : 'days'}`}
+                  ? t('Loading…')
+                  : t(
+                      streak.days === 1 ? '{{value0}} day' : '{{value0}} days',
+                      { value0: streak.days },
+                    )}
             </strong>
             <p>
-              Consecutive days visiting this website. Come back daily to keep
-              your streak!
+              {t(
+                'Consecutive days visiting this website. Come back daily to keep your streak!',
+              )}
             </p>
             {streak.error && (
               <div role="alert">
-                <p>{streak.error}</p>
-                <button onClick={streak.retry}>Retry streak</button>
+                <p>{t(streak.error)}</p>
+                <button onClick={streak.retry}>{t('Retry streak')}</button>
               </div>
             )}
           </div>
@@ -77,16 +84,16 @@ export function Dashboard({
       )}
       <section className="dashboard-welcome" aria-labelledby="welcome-title">
         <div>
-          <span className="welcome-tag">A LITTLE BETTER EVERY DAY</span>
+          <span className="welcome-tag">{t('A LITTLE BETTER EVERY DAY')}</span>
           <h2 id="welcome-title">
-            <span>Grow your vocabulary.</span>
+            <span>{t('Grow your vocabulary.')}</span>
             <br />
-            Open up your world.
+            {t('Open up your world.')}
           </h2>
           <p>
-            A new word today. A little more confidence tomorrow.
+            {t('A new word today. A little more confidence tomorrow.')}
             <br />
-            Your next learning moment starts here.
+            {t('Your next learning moment starts here.')}
           </p>
           {onNavigate && (
             <div className="welcome-actions">
@@ -94,10 +101,10 @@ export function Dashboard({
                 className="welcome-primary"
                 onClick={() => onNavigate('vocabulary')}
               >
-                Explore vocabulary <span aria-hidden="true">↗</span>
+                {t('Explore vocabulary')} <span aria-hidden="true">↗</span>
               </button>
               <button onClick={() => onNavigate('flashcards')}>
-                Practice flashcards <span aria-hidden="true">→</span>
+                {t('Practice flashcards')} <span aria-hidden="true">→</span>
               </button>
             </div>
           )}
@@ -106,26 +113,26 @@ export function Dashboard({
               {metrics ? metrics.total : '—'}
             </span>
             <div>
-              <strong>words in your collection</strong>
-              <span>Make room for a new word today.</span>
+              <strong>{t('words in your collection')}</strong>
+              <span>{t('Make room for a new word today.')}</span>
             </div>
           </div>
         </div>
         <div className="welcome-art" aria-hidden="true">
           <div className="art-orbit" />
           <div className="art-card art-card-back">
-            Aa<span>vocabulary</span>
+            Aa<span>{t('vocabulary')}</span>
           </div>
           <div className="art-card art-card-front">
-            Hello<span>/həˈləʊ/</span>
-            <i>a small word, a new beginning</i>
+            Hello<span>{t('/həˈləʊ/')}</span>
+            <i>{t('a small word, a new beginning')}</i>
           </div>
           <span className="art-spark">✦</span>
         </div>
       </section>
       {error ? (
         <div role="alert">
-          <p>{error}</p>
+          <p>{t(error)}</p>
           <button
             onClick={() => {
               setError('')
@@ -133,19 +140,20 @@ export function Dashboard({
               setAttempt((value) => value + 1)
             }}
           >
-            Retry dashboard
+            {t('Retry dashboard')}
           </button>
         </div>
       ) : !metrics ? (
-        <p role="status">Loading saved learning data…</p>
+        <p role="status">{t('Loading saved learning data…')}</p>
       ) : (
         <>
           {metrics.total === 0 && (
             <section className="dashboard-panel">
-              <h2>Start your vocabulary collection</h2>
+              <h2>{t('Start your vocabulary collection')}</h2>
               <p>
-                Add words or import an XLSX file in Vocabulary, then start a
-                flashcard session or quiz. Your saved activity will appear here.
+                {t(
+                  'Add words or import an XLSX file in Vocabulary, then start a flashcard session or quiz. Your saved activity will appear here.',
+                )}
               </p>
             </section>
           )}
@@ -155,37 +163,47 @@ export function Dashboard({
               aria-labelledby="overview-title"
             >
               <div className="panel-heading">
-                <h2 id="overview-title">Your vocabulary at a glance</h2>
-                <span>Saved learning data</span>
+                <h2 id="overview-title">{t('Your vocabulary at a glance')}</h2>
+                <span>{t('Saved learning data')}</span>
               </div>
               <div className="dashboard-grid">
                 <MetricCard
-                  label="Total vocabulary"
+                  label={t('Total vocabulary')}
                   value={metrics.total}
-                  detail="Current vocabulary entries, including separate meanings of the same word."
+                  detail={t(
+                    'Current vocabulary entries, including separate meanings of the same word.',
+                  )}
                 />
                 <MetricCard
-                  label="New words"
+                  label={t('New words')}
                   value={metrics.newWords}
-                  detail="No review mark or submitted quiz answer in the saved sessions."
+                  detail={t(
+                    'No review mark or submitted quiz answer in the saved sessions.',
+                  )}
                 />
                 <MetricCard
-                  label="Learning words"
+                  label={t('Learning words')}
                   value={metrics.learning}
-                  detail="Studied entries that do not meet the saved-session learned rule."
+                  detail={t(
+                    'Studied entries that do not meet the saved-session learned rule.',
+                  )}
                 />
                 <MetricCard
-                  label="Learned words"
+                  label={t('Learned words')}
                   value={metrics.learned}
-                  detail="Marked remembered in flashcards, with no incorrect answer in the saved quiz."
+                  detail={t(
+                    'Marked remembered in flashcards, with no incorrect answer in the saved quiz.',
+                  )}
                 />
                 <MetricCard
-                  label="Due for review today"
+                  label={t('Due for review today')}
                   value="Unavailable"
-                  detail="The app does not yet persist an SRS schedule or review due dates."
+                  detail={t(
+                    'The app does not yet persist an SRS schedule or review due dates.',
+                  )}
                 />
                 <MetricCard
-                  label="Quiz accuracy"
+                  label={t('Quiz accuracy')}
                   value={
                     metrics.accuracy === null
                       ? 'No answers yet'
@@ -193,8 +211,14 @@ export function Dashboard({
                   }
                   detail={
                     metrics.quiz?.answered
-                      ? `${metrics.quiz.correct} correct of ${metrics.quiz.answered} submitted answers in the saved quiz. Unanswered questions are excluded.`
-                      : 'Answer a quiz question to see your accuracy.'
+                      ? t(
+                          '{{value0}} correct of {{value1}} submitted answers in the saved quiz. Unanswered questions are excluded.',
+                          {
+                            value0: metrics.quiz.correct,
+                            value1: metrics.quiz.answered,
+                          },
+                        )
+                      : t('Answer a quiz question to see your accuracy.')
                   }
                 />
               </div>
@@ -203,23 +227,23 @@ export function Dashboard({
               className="dashboard-panel"
               aria-labelledby="dashboard-progress-title"
             >
-              <h2 id="dashboard-progress-title">Current learning progress</h2>
+              <h2 id="dashboard-progress-title">
+                {t('Current learning progress')}
+              </h2>
               <p>
-                {metrics.learned} of {metrics.total} current entries meet the
-                learned rule.
+                {metrics.learned} {t('of')} {metrics.total}{' '}
+                {t('current entries meet the learned rule.')}
               </p>
               <meter
                 min={0}
                 max={metrics.total || 1}
                 value={metrics.learned}
-                aria-label="Current entries meeting the learned rule"
+                aria-label={t('Current entries meeting the learned rule')}
               />
               <p>
-                These categories use only retained sessions, not lifetime
-                mastery or SRS status. A missed answer takes precedence when
-                results conflict. Entries selected but not reviewed stay new.
-                Starting a new session or restarting flashcards can change these
-                counts.
+                {t(
+                  'These categories use only retained sessions, not lifetime mastery or SRS status. A missed answer takes precedence when results conflict. Entries selected but not reviewed stay new. Starting a new session or restarting flashcards can change these counts.',
+                )}
               </p>
             </section>
           </div>
@@ -227,40 +251,44 @@ export function Dashboard({
             className="dashboard-panel"
             aria-labelledby="dashboard-activity-title"
           >
-            <h2 id="dashboard-activity-title">Recent study activity</h2>
+            <h2 id="dashboard-activity-title">{t('Recent study activity')}</h2>
             <p>
-              Only the current saved flashcard session and quiz are retained.
-              Study timestamps are not stored, so this activity cannot be dated
-              or ordered by recency.
+              {t(
+                'Only the current saved flashcard session and quiz are retained. Study timestamps are not stored, so this activity cannot be dated or ordered by recency.',
+              )}
             </p>
             {!metrics.flashcards && !metrics.quiz ? (
               <p>
-                No saved study sessions yet. Study some flashcards or start a
-                quiz to begin.
+                {t(
+                  'No saved study sessions yet. Study some flashcards or start a quiz to begin.',
+                )}
               </p>
             ) : (
               <ul className="dashboard-activity">
                 {metrics.flashcards && (
                   <li>
-                    <h3>Saved flashcard session</h3>
+                    <h3>{t('Saved flashcard session')}</h3>
                     <p>
-                      {metrics.flashcards.remembered} remembered ·{' '}
-                      {metrics.flashcards.notRemembered} not remembered ·{' '}
-                      {metrics.flashcards.unreviewed} unreviewed of{' '}
-                      {metrics.flashcards.total} cards.
+                      {metrics.flashcards.remembered} {t('remembered ·')}{' '}
+                      {metrics.flashcards.notRemembered} {t('not remembered ·')}{' '}
+                      {metrics.flashcards.unreviewed} {t('unreviewed of')}{' '}
+                      {metrics.flashcards.total} {t('cards.')}
                     </p>
                   </li>
                 )}
                 {metrics.quiz && (
                   <li>
                     <h3>
-                      Saved quiz ·{' '}
-                      {metrics.quiz.finished ? 'Completed' : 'In progress'}
+                      {t('Saved quiz ·')}{' '}
+                      {metrics.quiz.finished
+                        ? t('Completed')
+                        : t('In progress')}
                     </h3>
                     <p>
-                      {metrics.quiz.answered} of {metrics.quiz.total} answered ·{' '}
-                      {metrics.quiz.correct} correct ·{' '}
-                      {metrics.quiz.answered - metrics.quiz.correct} missed.
+                      {metrics.quiz.answered} {t('of')} {metrics.quiz.total}{' '}
+                      {t('answered ·')} {metrics.quiz.correct} {t('correct ·')}{' '}
+                      {metrics.quiz.answered - metrics.quiz.correct}{' '}
+                      {t('missed.')}
                     </p>
                   </li>
                 )}
@@ -268,18 +296,18 @@ export function Dashboard({
             )}
             {(metrics.flashcards || metrics.quiz) && (
               <p>
-                Saved session totals include word snapshots removed from the
-                library. Word categories above count only entries still in your
-                library.
+                {t(
+                  'Saved session totals include word snapshots removed from the library. Word categories above count only entries still in your library.',
+                )}
               </p>
             )}
           </section>
           <section className="dashboard-panel">
-            <h2>Learning progress over time</h2>
+            <h2>{t('Learning progress over time')}</h2>
             <p>
-              Historical learning data is not available. The app does not store
-              dated review events or previous quizzes, so a timeline cannot be
-              calculated from the existing data.
+              {t(
+                'Historical learning data is not available. The app does not store dated review events or previous quizzes, so a timeline cannot be calculated from the existing data.',
+              )}
             </p>
           </section>
         </>

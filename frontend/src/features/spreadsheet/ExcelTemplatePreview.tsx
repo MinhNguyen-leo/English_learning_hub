@@ -1,7 +1,10 @@
+import { useUiText } from '../../lib/useUiText'
 import { fieldNames, fields } from '../vocabulary/model'
 import { templateExamples } from './template'
 
 export function ExcelTemplatePreview() {
+  const t = useUiText()
+
   return (
     <section
       id="excel-template-preview"
@@ -10,31 +13,33 @@ export function ExcelTemplatePreview() {
     >
       <div className="template-preview-heading">
         <span className="template-file-icon" aria-hidden="true">
-          X
+          {t('X')}
         </span>
         <div>
-          <h3 id="template-preview-heading">Excel template preview</h3>
-          <p>Vocabulary · first worksheet · 8 columns</p>
+          <h3 id="template-preview-heading">{t('Excel template preview')}</h3>
+          <p>{t('Vocabulary · first worksheet · 8 columns')}</p>
         </div>
       </div>
       <p>
-        Put these headers in row 1, then add one vocabulary entry per row. Word
-        and at least one English or Vietnamese meaning are required. All other
-        cells may be left blank. Format cells as Text; do not use formulas.
+        {t(
+          'Put these headers in row 1, then add one vocabulary entry per row. Word and at least one English or Vietnamese meaning are required. All other cells may be left blank. Format cells as Text; do not use formulas.',
+        )}
       </p>
       <div
         className="table-scroll"
         role="region"
-        aria-label="Excel template example"
+        aria-label={t('Excel template example')}
         tabIndex={0}
       >
         <table>
           <caption>
-            Example worksheet — scroll horizontally to see all eight columns
+            {t(
+              'Example worksheet — scroll horizontally to see all eight columns',
+            )}
           </caption>
           <thead>
             <tr>
-              <th scope="col" aria-label="Worksheet row">
+              <th scope="col" aria-label={t('Worksheet row')}>
                 #
               </th>
               {fieldNames.map((key) => (
@@ -59,20 +64,21 @@ export function ExcelTemplatePreview() {
       <dl className="template-column-guide">
         {fieldNames.map((key) => (
           <div key={key}>
-            <dt>{fields[key].label}</dt>
+            <dt>{t(fields[key].label)}</dt>
             <dd>
               {key === 'word'
-                ? 'Required'
+                ? t('Required')
                 : key === 'english_meaning' || key === 'vietnamese_meaning'
-                  ? 'At least one meaning'
-                  : 'Optional'}
+                  ? t('At least one meaning')
+                  : t('Optional')}
             </dd>
           </div>
         ))}
       </dl>
       <p className="template-safety-note">
-        These are example words only. Previewing or downloading this template
-        does not add words to your library.
+        {t(
+          'These are example words only. Previewing or downloading this template does not add words to your library.',
+        )}
       </p>
     </section>
   )

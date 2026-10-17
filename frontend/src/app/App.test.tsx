@@ -2,24 +2,29 @@
 import 'fake-indexeddb/auto'
 import {
   cleanup,
+  act,
   render,
   screen,
   waitFor,
   within,
 } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { afterEach, expect, it } from 'vitest'
+import { afterAll, afterEach, beforeEach, expect, it } from 'vitest'
 import App from './App'
 import { ApplicationDatabase } from '../db/ApplicationDatabase'
 import { IndexedDBBackupRepository } from '../features/backup/repository'
 import { fixture } from '../features/backup/testSupport'
+import i18n, { languageStorageKey } from '../lib/i18n'
 
 const db = new ApplicationDatabase()
 afterEach(async () => {
   cleanup()
+  await i18n.changeLanguage('en')
+})
+afterAll(async () => {
   await db.delete()
 })
-it('persists study preferences and reloads all mounted learning views after a confirmed restore', async () => {
+beforeEach(() => {
   Object.defineProperty(HTMLDialogElement.prototype, 'showModal', {
     configurable: true,
     value: function (this: HTMLDialogElement) {
@@ -32,6 +37,8 @@ it('persists study preferences and reloads all mounted learning views after a co
       this.open = false
     },
   })
+})
+it('persists study preferences and reloads all mounted learning views after a confirmed restore', async () => {
   const repository = new IndexedDBBackupRepository(db)
   const original = fixture()
   await repository.restore(await repository.preview(original), 'replace', true)
@@ -43,9 +50,17 @@ it('persists study preferences and reloads all mounted learning views after a co
     'https://www.instagram.com/t_minleo/',
   )
   expect(instagram.getAttribute('target')).toBe('_blank')
-  expect(screen.getByText('feedback to me at ins:')).toBeTruthy()
-  expect(screen.getByText('donate hay bị chan')).toBeTruthy()
-  expect(screen.getByText('0933133496 vietinbank')).toBeTruthy()
+  expect(
+    within(
+      screen.getByRole('region', { name: 'Feedback to me at ins' }),
+    ).getByRole('link', { name: /Instagram t_minleo/ }),
+  ).toBeTruthy()
+  expect(screen.getByText('Support my work')).toBeTruthy()
+  expect(
+    within(screen.getByRole('region', { name: 'Support my work' })).getByText(
+      'Donate via QR',
+    ),
+  ).toBeTruthy()
   await waitFor(() =>
     expect(
       within(screen.getByRole('region', { name: 'Visit streak' })).getByText(
@@ -55,6 +70,12 @@ it('persists study preferences and reloads all mounted learning views after a co
   )
   await user.click(screen.getByRole('button', { name: 'Vocabulary' }))
   await screen.findByRole('button', { name: 'Word for term-0' })
+  expect(
+    screen
+      .getAllByRole('columnheader')
+      .slice(0, 4)
+      .map((header) => header.textContent),
+  ).toEqual(['Word', 'Definition', 'Translation', 'Part of speech'])
   await user.click(screen.getByRole('button', { name: 'Flashcards' }))
   const size = await screen.findByRole('combobox', { name: 'Session size' })
   await waitFor(() => expect(size).toHaveProperty('value', 'all'))
@@ -119,3 +140,70 @@ it('persists study preferences and reloads all mounted learning views after a co
   await screen.findByRole('button', { name: 'Word for restored-term-0' })
   expect((await repository.export()).data).toEqual(incoming.data)
 }, 15000)
+
+it('switches the whole interface without losing vocabulary or the active draft and shows local donation QR', async () => {
+  const repository = new IndexedDBBackupRepository(db)
+  const original = fixture()
+  await repository.restore(await repository.preview(original), 'replace', true)
+  const user = userEvent.setup()
+  render(<App />)
+  await screen.findByRole('heading', { name: 'Learning Dashboard' })
+  await user.click(screen.getByRole('button', { name: 'Vocabulary' }))
+  await screen.findByRole('button', { name: 'Word for term-0' })
+  await user.click(screen.getByRole('button', { name: 'Add vocabulary' }))
+  await user.type(
+    screen.getByRole('textbox', { name: 'Word' }),
+    'my unsaved word',
+  )
+  await user.click(screen.getByRole('switch', { name: 'Use Vietnamese' }))
+  expect(
+    screen.getByRole('switch', { name: 'Sử dụng tiếng Việt' }),
+  ).toHaveProperty('ariaChecked', 'true')
+  expect(document.documentElement.lang).toBe('vi')
+  expect(localStorage.getItem(languageStorageKey)).toBe('vi')
+  expect(screen.getByRole('heading', { name: 'Từ vựng của tôi' })).toBeTruthy()
+  expect(screen.getByRole('textbox', { name: 'Từ' })).toHaveProperty(
+    'value',
+    'my unsaved word',
+  )
+  expect(screen.getByRole('button', { name: 'Từ của term-0' })).toHaveProperty(
+    'textContent',
+    'term-0',
+  )
+  await user.click(screen.getByRole('button', { name: 'Hướng dẫn' }))
+  const tutorial = screen.getByRole('dialog', {
+    name: 'Một cuốn vở từ vựng, và hơn thế nữa.',
+  })
+  await user.click(within(tutorial).getByRole('button', { name: 'Đến thẻ 5' }))
+  expect(
+    within(tutorial).getByRole('img', {
+      name: 'Mã QR ủng hộ NGUYEN TIEN MINH tại VietinBank',
+    }),
+  ).toBeTruthy()
+  await act(() => i18n.changeLanguage('en'))
+  expect(
+    within(tutorial).getByRole('heading', {
+      name: "Here's to reaching your goal!",
+    }),
+  ).toBeTruthy()
+  await user.click(
+    within(tutorial).getByRole('button', { name: 'Close tutorial' }),
+  )
+  expect(document.activeElement).toBe(
+    screen.getByRole('button', { name: 'Tutorial' }),
+  )
+  expect(screen.getByRole('textbox', { name: 'Word' })).toHaveProperty(
+    'value',
+    'my unsaved word',
+  )
+  await user.click(screen.getByText('Donate via QR'))
+  expect(
+    screen.getByRole('img', {
+      name: 'Donation QR for NGUYEN TIEN MINH at VietinBank',
+    }),
+  ).toBeTruthy()
+  expect(screen.queryByText(/0933133496/)).toBeNull()
+  expect((await repository.export()).data.vocabulary).toEqual(
+    original.data.vocabulary,
+  )
+})

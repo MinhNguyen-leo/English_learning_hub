@@ -5,6 +5,7 @@ export type QuizSize = 10 | 20 | 50 | 'all'
 export interface QuizQuestion {
   target: Vocabulary
   options: [string, string, string, string]
+  translations?: [string, string, string, string]
   correctIndex: number
 }
 export interface GeneratedQuiz {
@@ -280,9 +281,14 @@ export function generateQuiz(
     if (size !== 'all' && questions.length >= size) continue
     const answers = shuffle(
       [
-        { text: target.row.english_meaning, correct: true },
+        {
+          text: target.row.english_meaning,
+          translation: target.row.vietnamese_meaning,
+          correct: true,
+        },
         ...distractors.map((entry) => ({
           text: entry.row.english_meaning,
+          translation: entry.row.vietnamese_meaning,
           correct: false,
         })),
       ],
@@ -291,6 +297,9 @@ export function generateQuiz(
     questions.push({
       target: { ...target.row },
       options: answers.map((answer) => answer.text) as QuizQuestion['options'],
+      translations: answers.map((answer) => answer.translation) as NonNullable<
+        QuizQuestion['translations']
+      >,
       correctIndex: answers.findIndex((answer) => answer.correct),
     })
   }

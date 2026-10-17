@@ -120,6 +120,17 @@ function isQuestion(value: unknown): value is QuizQuestion {
   }
   const options = value.options as unknown[]
   if (
+    value.translations !== undefined &&
+    (!Array.isArray(value.translations) ||
+      value.translations.length !== 4 ||
+      !value.translations.every(
+        (translation) =>
+          typeof translation === 'string' && translation.length <= 2000,
+      ) ||
+      value.translations[value.correctIndex] !== target.vietnamese_meaning)
+  )
+    return false
+  if (
     !options.every(
       (option) =>
         typeof option === 'string' &&

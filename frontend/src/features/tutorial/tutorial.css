@@ -1,0 +1,308 @@
+.tutorial-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border: 1px solid #357b67;
+  border-radius: 999px;
+  background: var(--surface-tint);
+  color: var(--primary-dark);
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+.tutorial-trigger:hover {
+  background: #195c4c;
+}
+.tutorial-dialog {
+  width: min(580px, 40vw);
+  max-width: calc(100vw - 24px);
+  max-height: none;
+  margin: auto;
+  padding: 18px 12px;
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  overflow: visible;
+}
+.tutorial-dialog::backdrop {
+  background: #040c0bd9;
+  backdrop-filter: blur(8px);
+}
+.tutorial-stack {
+  position: relative;
+  isolation: isolate;
+}
+.tutorial-stack::before,
+.tutorial-stack::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border: 1px solid #4c7565;
+  border-radius: 24px;
+  background: #18372d;
+  transform: translateY(8px) rotate(-3deg);
+}
+.tutorial-stack::after {
+  background: #254437;
+  transform: translateY(12px) rotate(3deg);
+  z-index: -2;
+}
+.tutorial-card {
+  height: min(740px, 82svh);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid #4d7865;
+  border-radius: 24px;
+  background:
+    radial-gradient(ellipse at top right, #28574070, transparent 60%), #151f1a;
+  box-shadow: 0 24px 80px #0008;
+}
+.tutorial-header,
+.tutorial-footer {
+  padding: 18px 26px;
+  flex-shrink: 0;
+}
+.tutorial-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.tutorial-header > span {
+  color: var(--primary-dark);
+  font-size: 10px;
+  letter-spacing: 2px;
+}
+.tutorial-dialog button {
+  cursor: pointer;
+  font: inherit;
+}
+.tutorial-header button {
+  width: 40px;
+  height: 40px;
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  background: #ffffff08;
+  color: var(--text);
+  font-size: 24px;
+}
+.tutorial-content {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 0 26px 16px;
+  overscroll-behavior: contain;
+}
+.tutorial-page {
+  animation: tutorial-enter 200ms ease-out;
+}
+.tutorial-number {
+  display: block;
+  color: #78b59b;
+  font-size: 64px;
+  line-height: 1.1;
+  font-weight: 300;
+  letter-spacing: -4px;
+}
+.tutorial-label {
+  color: var(--primary-dark);
+  font-size: 12px;
+  letter-spacing: 1px;
+  margin: 18px 0 8px;
+}
+.tutorial-page h2 {
+  margin: 0 0 20px;
+  font-size: clamp(24px, 2.3vw, 34px);
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: -0.8px;
+}
+.tutorial-page p:not(.tutorial-label),
+.tutorial-steps {
+  color: #c4cec5;
+  font-size: 14px;
+  line-height: 1.8;
+}
+.tutorial-page p {
+  margin-bottom: 16px;
+}
+.tutorial-note,
+.tutorial-feature,
+.tutorial-donate {
+  padding: 16px;
+  margin-block: 18px;
+  border: 1px solid #3a5e49;
+  border-radius: 14px;
+  background: #9fe7b708;
+  font-size: 14px;
+  line-height: 1.8;
+}
+.tutorial-page .tutorial-signature {
+  color: #edc6a7;
+  font-style: italic;
+}
+.tutorial-sheet {
+  max-width: 100%;
+  overflow-x: auto;
+  margin-block: 18px;
+  border: 1px solid #3a5e49;
+  border-radius: 12px;
+}
+.tutorial-sheet table {
+  width: max-content;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+.tutorial-sheet caption {
+  text-align: left;
+  padding: 12px;
+  color: var(--primary-dark);
+  background: #193f30;
+}
+.tutorial-sheet :is(th, td) {
+  padding: 10px 12px;
+  text-align: left;
+  border: 1px solid #3a5e49;
+  max-width: 230px;
+}
+.tutorial-sheet th {
+  color: #b9e5cd;
+  background: #1d3328;
+}
+.tutorial-steps {
+  padding-left: 22px;
+}
+.tutorial-steps li {
+  margin-bottom: 16px;
+  padding-left: 4px;
+}
+.tutorial-steps strong {
+  color: var(--text);
+  margin-right: 0.3em;
+}
+.tutorial-feature h3 {
+  margin: 0 0 8px;
+  color: var(--primary-dark);
+  font-size: 18px;
+}
+.tutorial-feature p {
+  margin: 0;
+}
+.tutorial-donate {
+  border-style: dashed;
+}
+.tutorial-donate span,
+.tutorial-donate strong {
+  display: block;
+}
+.tutorial-donate strong {
+  color: #edc6a7;
+  font-size: 26px;
+  letter-spacing: 2px;
+}
+.tutorial-footer {
+  border-top: 1px solid #3a5e49;
+  background: #101b15;
+}
+.tutorial-progress {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 12px;
+}
+.tutorial-progress button {
+  width: 28px;
+  height: 26px;
+  border: 0;
+  background: transparent;
+  position: relative;
+}
+.tutorial-progress button::after {
+  content: '';
+  display: block;
+  height: 4px;
+  border-radius: 4px;
+  background: #4e6657;
+}
+.tutorial-progress button[aria-current='step']::after {
+  background: var(--primary-dark);
+}
+.tutorial-progress span {
+  margin-left: auto;
+  color: var(--text-muted);
+  font-size: 12px;
+}
+.tutorial-actions {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+.tutorial-actions button {
+  padding: 11px 14px;
+  border: 1px solid #4e6657;
+  border-radius: 10px;
+  color: var(--text);
+  background: transparent;
+  font-size: 13px;
+}
+.tutorial-actions .tutorial-next {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: white;
+}
+.tutorial-actions button:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+.tutorial-dialog button:hover:not(:disabled) {
+  filter: brightness(1.2);
+}
+.tutorial-dialog :focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 3px;
+}
+@keyframes tutorial-enter {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@media (max-width: 900px) {
+  .tutorial-dialog {
+    width: min(540px, calc(100vw - 32px));
+  }
+}
+@media (max-width: 640px) {
+  .tutorial-trigger {
+    order: 0;
+    margin-left: auto;
+  }
+  .app-sidebar .app-navigation {
+    order: 1;
+  }
+  .tutorial-dialog {
+    padding-inline: 8px;
+  }
+  .tutorial-header,
+  .tutorial-footer {
+    padding: 14px 18px;
+  }
+  .tutorial-content {
+    padding-inline: 18px;
+  }
+  .tutorial-number {
+    font-size: 48px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .tutorial-page {
+    animation: none;
+  }
+}

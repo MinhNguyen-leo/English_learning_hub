@@ -9,6 +9,23 @@ import {
 } from './model'
 
 describe('full backup validation', () => {
+  it('accepts legacy quizzes without translations and round trips new translation snapshots', () => {
+    const backup = fixture()
+    expect(parseBackup(JSON.stringify(backup))).toEqual(backup)
+    for (const question of backup.data.quizSessions[0]!.session.questions)
+      delete question.translations
+    expect(parseBackup(JSON.stringify(backup))).toEqual(backup)
+  })
+  it.each([['short'], ['', '', '', 'x'.repeat(2001)], ['', '', '', 42]])(
+    'rejects malformed translation snapshots %j',
+    (...values) => {
+      const backup = fixture()
+      Object.assign(backup.data.quizSessions[0]!.session.questions[0]!, {
+        translations: values,
+      })
+      expect(() => validateBackup(backup)).toThrow()
+    },
+  )
   it('round trips Unicode, IDs, timestamps, snapshot relationships and preferences without normalization or execution', () => {
     const original = fixture()
     expect(parseBackup(JSON.stringify(original))).toEqual(original)

@@ -1,0 +1,60 @@
+.donation-qr {
+  display: grid;
+  justify-items: center;
+  gap: 12px;
+  margin: 18px auto;
+  padding: 16px;
+  width: fit-content;
+  max-width: 100%;
+  border-radius: 16px;
+  background: #eff8ff;
+  color: #143c53;
+}
+.donation-qr svg {
+  display: block;
+  width: min(240px, 100%);
+  height: auto;
+  background: white;
+  border-radius: 6px;
+}
+.donation-qr figcaption {
+  display: grid;
+  gap: 3px;
+  text-align: center;
+  font-size: 12px;
+}
+.donation-qr figcaption span {
+  color: #35667f;
+}
+.donation-details {
+  width: min(290px, 100%);
+  color: var(--text);
+  font-size: 12px;
+}
+.donation-details summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding-block: 2px;
+  color: #edc6a7;
+  cursor: pointer;
+}
+.donation-details summary > svg {
+  flex-shrink: 0;
+  border-radius: 6px;
+}
+.donation-details:not([open]) {
+  width: fit-content;
+  max-width: 100%;
+}
+.donation-details p {
+  line-height: 1.6;
+}
+.donation-details .donation-qr {
+  margin: 8px 0;
+}
+.donation-details summary:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 3px;
+}

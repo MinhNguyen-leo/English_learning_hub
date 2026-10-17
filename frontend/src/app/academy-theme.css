@@ -30,6 +30,10 @@
 .app-shell :is(.flashcards, .quiz-page, .data-management) {
   max-width: 1120px;
 }
+.app-shell .vocabulary-manager {
+  max-width: none;
+  padding-inline: 16px;
+}
 .app-shell main > header {
   max-width: 820px;
   margin-bottom: 30px;

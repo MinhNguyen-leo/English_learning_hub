@@ -180,7 +180,8 @@ it('flips to show all requested fields, tracks review changes, and navigates the
   await user.click(screen.getByRole('button', { name: 'Flip card' }))
   const back = await screen.findByRole('article', { name: 'Card back' })
   expect(within(back).getByText('xin chào')).toBeTruthy()
-  expect(within(back).getByText('English meaning')).toBeTruthy()
+  expect(within(back).getByRole('heading', { name: /^meaning \d$/ })).toBeTruthy()
+  expect(within(back).getByText('Translation')).toBeTruthy()
   expect(within(back).getByText('Noun')).toBeTruthy()
   expect(within(back).getByText(/Example \d/)).toBeTruthy()
   await user.click(screen.getByRole('button', { name: 'Remembered' }))
@@ -252,15 +253,15 @@ it('keeps the selected set during shuffle and restart, requiring confirmation to
   await user.click(
     screen.getByRole('button', { name: 'Restart current cards' }),
   )
-  const popup = screen.getByRole('dialog', { name: 'Bắt đầu lại bộ thẻ?' })
+  const popup = screen.getByRole('dialog', { name: 'Restart these cards?' })
   await user.keyboard(' {ArrowRight}')
   expect((await deps.progress.load())?.session.index).toBe(0)
-  await user.click(within(popup).getByRole('button', { name: 'Hủy' }))
+  await user.click(within(popup).getByRole('button', { name: 'Cancel' }))
   expect((await deps.progress.load())?.session.reviews).toHaveLength(1)
   await user.click(
     screen.getByRole('button', { name: 'Restart current cards' }),
   )
-  await user.click(screen.getByRole('button', { name: 'Bắt đầu lại' }))
+  await user.click(screen.getByRole('button', { name: 'Restart' }))
   expect((await deps.progress.load())?.session.reviews).toHaveLength(0)
   expect(
     (await deps.progress.load())?.session.cards.map((card) => card.id).sort(),
@@ -277,14 +278,14 @@ it('keeps the restart popup and review marks when saving fails, then allows retr
     screen.getByRole('button', { name: 'Restart current cards' }),
   )
   vi.mocked(deps.progress.save).mockRejectedValueOnce(new Error('Storage full'))
-  await user.click(screen.getByRole('button', { name: 'Bắt đầu lại' }))
-  const popup = screen.getByRole('dialog', { name: 'Bắt đầu lại bộ thẻ?' })
+  await user.click(screen.getByRole('button', { name: 'Restart' }))
+  const popup = screen.getByRole('dialog', { name: 'Restart these cards?' })
   expect(await within(popup).findByRole('alert')).toHaveProperty(
     'textContent',
     'Storage full',
   )
   expect((await deps.progress.load())?.session.reviews).toHaveLength(1)
-  await user.click(within(popup).getByRole('button', { name: 'Bắt đầu lại' }))
+  await user.click(within(popup).getByRole('button', { name: 'Restart' }))
   await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
   expect((await deps.progress.load())?.session.reviews).toHaveLength(0)
 })

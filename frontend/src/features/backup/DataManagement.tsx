@@ -1,3 +1,5 @@
+import { useUiText } from '../../lib/useUiText'
+import i18n from '../../lib/i18n'
 import { useEffect, useRef, useState } from 'react'
 import {
   conflicts,
@@ -24,6 +26,8 @@ export function DataManagement({
   onRestored: () => Promise<void>
   active?: boolean
 }) {
+  const t = useUiText()
+
   const [preview, setPreview] = useState<RestorePreview | null>(null)
   const [mode, setMode] = useState<RestoreMode>('merge')
   const [busy, setBusy] = useState(false)
@@ -146,56 +150,72 @@ export function DataManagement({
   return (
     <main className="data-management" aria-busy={busy}>
       <header>
-        <p className="eyebrow">LOCAL DATA</p>
-        <h1>Data Management</h1>
+        <p className="eyebrow">{t('LOCAL DATA')}</p>
+        <h1>{t('Data Management')}</h1>
         <p>
-          Back up your vocabulary, saved flashcards, quiz answers and study
-          preferences in one JSON file.
+          {t(
+            'Back up your vocabulary, saved flashcards, quiz answers and study preferences in one JSON file.',
+          )}
         </p>
       </header>
       <p className="backup-warning">
-        <strong>Browser data can be lost.</strong> Clearing site data, private
-        browsing, browser removal or storage eviction can erase your library.
-        Download backups regularly. Files stay on your device.
+        <strong>{t('Browser data can be lost.')}</strong>{' '}
+        {t(
+          'Clearing site data, private browsing, browser removal or storage eviction can erase your library. Download backups regularly. Files stay on your device.',
+        )}
       </p>
       <section aria-labelledby="storage-title">
-        <h2 id="storage-title">Storage information</h2>
+        <h2 id="storage-title">{t('Storage information')}</h2>
         {storage ? (
           <dl>
             {(Object.keys(labels) as (keyof BackupData)[]).map((key) => (
               <div key={key}>
-                <dt>{labels[key]}</dt>
+                <dt>{t(labels[key])}</dt>
                 <dd>{storage[key]}</dd>
               </div>
             ))}
           </dl>
         ) : (
-          <p>Local record counts unavailable or loading.</p>
+          <p>{t('Local record counts unavailable or loading.')}</p>
         )}
         <p>
           {estimate?.usage !== undefined
-            ? `Estimated origin usage: ${(estimate.usage / 1024 / 1024).toFixed(2)} MiB${estimate.quota !== undefined ? ` of ${(estimate.quota / 1024 / 1024).toFixed(0)} MiB quota` : ''}. This includes retained legacy progress copies.`
-            : 'Storage size estimates are not available in this browser.'}
+            ? t(
+                'Estimated origin usage: {{value0}} MiB{{value1}}. This includes retained legacy progress copies.',
+                {
+                  value0: (estimate.usage / 1024 / 1024).toFixed(2),
+                  value1:
+                    estimate.quota !== undefined
+                      ? t(' of {{value0}} MiB quota', {
+                          value0: (estimate.quota / 1024 / 1024).toFixed(0),
+                        })
+                      : '',
+                },
+              )
+            : t('Storage size estimates are not available in this browser.')}
         </p>
         <p>
-          The app currently retains one active flashcard session and one active
-          quiz, including completed quiz answers. There is no separate
-          historical quiz archive.
+          {t(
+            'The app currently retains one active flashcard session and one active quiz, including completed quiz answers. There is no separate historical quiz archive.',
+          )}
         </p>
       </section>
       <section aria-labelledby="export-title">
-        <h2 id="export-title">Export Full Backup</h2>
+        <h2 id="export-title">{t('Export Full Backup')}</h2>
         <p>
-          Includes IDs, timestamps, saved questions, answers, review marks and
-          application settings. Unsaved edits are not included.
+          {t(
+            'Includes IDs, timestamps, saved questions, answers, review marks and application settings. Unsaved edits are not included.',
+          )}
         </p>
         <button disabled={busy} onClick={exportBackup}>
-          Export Full Backup
+          {t('Export Full Backup')}
         </button>
       </section>
       <section aria-labelledby="restore-title">
-        <h2 id="restore-title">Restore Full Backup</h2>
-        <label htmlFor="backup-file">Choose a JSON backup (up to 32 MiB)</label>
+        <h2 id="restore-title">{t('Restore Full Backup')}</h2>
+        <label htmlFor="backup-file">
+          {t('Choose a JSON backup (up to 32 MiB)')}
+        </label>
         <input
           ref={input}
           id="backup-file"
@@ -209,22 +229,25 @@ export function DataManagement({
         />
         {preview && incoming && collisions && (
           <div className="restore-preview">
-            <h3>Restore preview</h3>
+            <h3>{t('Restore preview')}</h3>
             <p>
-              Format version {preview.backup.formatVersion} · Exported{' '}
-              {new Date(preview.backup.exportedAt).toLocaleString()}
+              {t('Format version')} {preview.backup.formatVersion}{' '}
+              {t('· Exported')}{' '}
+              {new Date(preview.backup.exportedAt).toLocaleString(
+                i18n.resolvedLanguage,
+              )}
             </p>
             <ul>
               {(Object.keys(labels) as (keyof BackupData)[]).map((key) => (
                 <li key={key}>
-                  {labels[key]}: {incoming[key]} incoming,{' '}
-                  {counts(preview.current)[key]} local, {collisions[key]}{' '}
-                  conflicting IDs
+                  {t(labels[key])}: {incoming[key]} {t('incoming,')}{' '}
+                  {counts(preview.current)[key]} {t('local,')} {collisions[key]}{' '}
+                  {t('conflicting IDs')}
                 </li>
               ))}
             </ul>
             <fieldset disabled={busy}>
-              <legend>Restore mode</legend>
+              <legend>{t('Restore mode')}</legend>
               <label>
                 <input
                   type="radio"
@@ -232,7 +255,9 @@ export function DataManagement({
                   checked={mode === 'merge'}
                   onChange={() => setMode('merge')}
                 />{' '}
-                Merge — keep existing records for matching IDs; add missing IDs.
+                {t(
+                  'Merge — keep existing records for matching IDs; add missing IDs.',
+                )}
               </label>
               <label>
                 <input
@@ -241,19 +266,20 @@ export function DataManagement({
                   checked={mode === 'replace'}
                   onChange={() => setMode('replace')}
                 />{' '}
-                Replace — replace all current vocabulary, progress and settings
-                with this backup.
+                {t(
+                  'Replace — replace all current vocabulary, progress and settings with this backup.',
+                )}
               </label>
             </fieldset>
             <p>
-              Merge preserves distinct IDs even when words have identical
-              meanings. Saved study sessions retain their own word snapshots;
-              deleted library words in a session are valid.
+              {t(
+                'Merge preserves distinct IDs even when words have identical meanings. Saved study sessions retain their own word snapshots; deleted library words in a session are valid.',
+              )}
             </p>
             <p>
-              Restoring reloads learning screens and discards unsaved edits.
-              Save any drafts before continuing. Other tabs must reload after a
-              restore.
+              {t(
+                'Restoring reloads learning screens and discards unsaved edits. Save any drafts before continuing. Other tabs must reload after a restore.',
+              )}
             </p>
             <button
               disabled={busy}
@@ -262,15 +288,15 @@ export function DataManagement({
               }
             >
               {mode === 'merge'
-                ? 'Restore with Merge'
-                : 'Review Replace confirmation'}
+                ? t('Restore with Merge')
+                : t('Review Replace confirmation')}
             </button>
           </div>
         )}
       </section>
-      {busy && <p role="status">Working with local storage…</p>}
-      {status && <p role="status">{status}</p>}
-      {error && <p role="alert">{error}</p>}
+      {busy && <p role="status">{t('Working with local storage…')}</p>}
+      {status && <p role="status">{t(status)}</p>}
+      {error && <p role="alert">{t(error)}</p>}
       <dialog
         ref={dialog}
         aria-labelledby="replace-title"
@@ -279,18 +305,18 @@ export function DataManagement({
           else setConfirming(false)
         }}
       >
-        <h2 id="replace-title">Replace all local data?</h2>
+        <h2 id="replace-title">{t('Replace all local data?')}</h2>
         <p>
-          This removes the current vocabulary, flashcard and quiz progress, and
-          preferences, then restores the validated backup. Unsaved drafts will
-          be discarded. Export your current data first if you need to keep it.
+          {t(
+            'This removes the current vocabulary, flashcard and quiz progress, and preferences, then restores the validated backup. Unsaved drafts will be discarded. Export your current data first if you need to keep it.',
+          )}
         </p>
         <div className="backup-actions">
           <button disabled={busy} onClick={() => setConfirming(false)}>
-            Cancel
+            {t('Cancel')}
           </button>
           <button disabled={busy} onClick={restore}>
-            Replace all local data
+            {t('Replace all local data')}
           </button>
         </div>
       </dialog>

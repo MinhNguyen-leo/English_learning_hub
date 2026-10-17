@@ -1,3 +1,4 @@
+import { useUiText } from '../../lib/useUiText'
 import { useEffect, useRef, useState } from 'react'
 import type { VocabularyRepository } from '../vocabulary/repository'
 import type { Vocabulary } from '../vocabulary/model'
@@ -27,6 +28,8 @@ export function Flashcards({
   repository: VocabularyRepository
   progress: ReviewProgressRepository
 }) {
+  const t = useUiText()
+
   const [library, setLibrary] = useState<Vocabulary[]>([])
   const [saved, setSaved] = useState<SavedSession | null>(null)
   const [size, setSize] = useState<SessionSize>(initialSize)
@@ -93,7 +96,9 @@ export function Flashcards({
     if (
       saved &&
       !window.confirm(
-        'Start a new session? This replaces the saved selection and review progress.',
+        t(
+          'Start a new session? This replaces the saved selection and review progress.',
+        ),
       )
     )
       return
@@ -214,21 +219,21 @@ export function Flashcards({
   return (
     <main className="flashcards" ref={studyRoot}>
       <header>
-        <p className="eyebrow">ENGLISH LEARNING HUB / FLASHCARDS</p>
-        <h1>Study your vocabulary</h1>
+        <p className="eyebrow">{t('ENGLISH LEARNING HUB / FLASHCARDS')}</p>
+        <h1>{t('Study your vocabulary')}</h1>
         <p>
-          Your selected cards stay fixed throughout the session, even if
-          vocabulary is edited or deleted. Progress is saved in this browser
-          after each action.
+          {t(
+            'Your selected cards stay fixed throughout the session, even if vocabulary is edited or deleted. Progress is saved in this browser after each action.',
+          )}
         </p>
       </header>
       {loading ? (
-        <p role="status">Loading vocabulary and saved progress…</p>
+        <p role="status">{t('Loading vocabulary and saved progress…')}</p>
       ) : (
         <>
           <div className="study-toolbar">
             <label>
-              Study mode
+              {t('Study mode')}
               <select
                 value={reviewMode ? 'review' : 'random'}
                 disabled={busy}
@@ -236,12 +241,12 @@ export function Flashcards({
                   setReviewMode(event.target.value === 'review')
                 }
               >
-                <option value="random">Random study</option>
-                <option value="review">Review mistakes first</option>
+                <option value="random">{t('Random study')}</option>
+                <option value="review">{t('Review mistakes first')}</option>
               </select>
             </label>
             <label>
-              Session size
+              {t('Session size')}
               <select
                 value={size}
                 disabled={busy}
@@ -254,9 +259,9 @@ export function Flashcards({
                   onSizeChange?.(next)
                 }}
               >
-                <option value={20}>20 words</option>
-                <option value={50}>50 words</option>
-                <option value="all">All available words</option>
+                <option value={20}>{t('20 words')}</option>
+                <option value={50}>{t('50 words')}</option>
+                <option value="all">{t('All available words')}</option>
               </select>
             </label>
             <button
@@ -265,60 +270,72 @@ export function Flashcards({
               }
               onClick={start}
             >
-              {session ? 'Start new session' : 'Start session'}
+              {session ? t('Start new session') : t('Start session')}
             </button>
             <button disabled={busy} onClick={refreshLibrary}>
-              Refresh available words
+              {t('Refresh available words')}
             </button>
             <button disabled={busy} onClick={reload}>
-              Reload saved progress
+              {t('Reload saved progress')}
             </button>
           </div>
           <p>
-            {availableCount} distinct words available.{' '}
+            {availableCount} {t('distinct words available.')}{' '}
             {size !== 'all' && availableCount < size && availableCount > 0
-              ? `Fewer than ${size} words are available; the new session will use all ${availableCount}.`
-              : 'New sessions do not repeat a target word.'}
+              ? t(
+                  'Fewer than {{value0}} words are available; the new session will use all {{value1}}.',
+                  { value0: size, value1: availableCount },
+                )
+              : t('New sessions do not repeat a target word.')}
           </p>
           <p className="study-footnote">
             {reviewMode
-              ? 'New sessions put Not remembered words from your saved flashcard session first, then random words. No due dates are stored; this is not overdue scheduling.'
-              : 'Random study remains available. Multiple records for the same word contribute one card.'}
+              ? t(
+                  'New sessions put Not remembered words from your saved flashcard session first, then random words. No due dates are stored; this is not overdue scheduling.',
+                )
+              : t(
+                  'Random study remains available. Multiple records for the same word contribute one card.',
+                )}
           </p>
           {!library.length && !libraryError && (
             <p>
-              Add vocabulary in the Vocabulary tab to start a new session.
-              {session ? ' Your saved session is still available below.' : ''}
+              {t(
+                'Add vocabulary in the Vocabulary tab to start a new session.',
+              )}
+              {session
+                ? t(' Your saved session is still available below.')
+                : ''}
             </p>
           )}
           {libraryError && (
             <p role="alert" className="error">
-              Could not load available vocabulary: {libraryError} You can retry
-              with Refresh available words.
+              {t('Could not load available vocabulary:')} {t(libraryError)}{' '}
+              {t('You can retry with Refresh available words.')}
             </p>
           )}
           {!ready && (
             <p>
-              Saved progress has not been loaded. Use Reload saved progress to
-              retry before starting a session.
+              {t(
+                'Saved progress has not been loaded. Use Reload saved progress to retry before starting a session.',
+              )}
             </p>
           )}
           {error && !restartOpen && (
             <p role="alert" className="error">
-              {error}
+              {t(error)}
             </p>
           )}
-          <p role="status">{busy ? 'Saving / loading…' : status}</p>
+          <p role="status">{busy ? t('Saving / loading…') : t(status)}</p>
           {session && card && counts && (
             <>
               <p className="study-position">
-                Card {session.index + 1} of {session.cards.length}
+                {t('Card')} {session.index + 1} {t('of')} {session.cards.length}
               </p>
               <article
                 ref={cardRoot}
                 key={card.id}
                 className={`study-card ${session.flipped ? 'is-flipped' : ''}`}
-                aria-label={session.flipped ? 'Card back' : 'Card front'}
+                aria-label={session.flipped ? t('Card back') : t('Card front')}
                 aria-live="polite"
                 tabIndex={0}
                 aria-keyshortcuts="Enter Space ArrowLeft ArrowRight"
@@ -348,7 +365,9 @@ export function Flashcards({
                     aria-hidden={session.flipped}
                     inert={session.flipped}
                   >
-                    <span className="card-kicker">VOCABULARY · FLASHCARDS</span>
+                    <span className="card-kicker">
+                      {t('VOCABULARY · FLASHCARDS')}
+                    </span>
                     <div className="card-center">
                       <h2>{card.word}</h2>
                     </div>
@@ -358,7 +377,7 @@ export function Flashcards({
                       aria-pressed={false}
                       onClick={() => act({ type: 'flip' })}
                     >
-                      <span aria-hidden="true">⟳</span> Flip card
+                      <span aria-hidden="true">⟳</span> {t('Flip card')}
                     </button>
                   </div>
                   <div
@@ -366,19 +385,17 @@ export function Flashcards({
                     aria-hidden={!session.flipped}
                     inert={!session.flipped}
                   >
-                    <span className="card-kicker">NGHĨA VÀ VÍ DỤ</span>
+                    <span className="card-kicker">{t('NGHĨA VÀ VÍ DỤ')}</span>
                     <dl className="card-center">
-                      <dt className="sr-only">Vietnamese meaning</dt>
+                      <dt className="sr-only">{t('Definition')}</dt>
                       <dd className="card-meaning">
                         <h2>
-                          {card.vietnamese_meaning ||
-                            card.english_meaning ||
-                            'Not provided'}
+                          {card.english_meaning || t('Not provided')}
                         </h2>
                       </dd>
-                      <dt>English meaning</dt>
-                      <dd>{card.english_meaning || 'Not provided'}</dd>
-                      <dt>Part of speech</dt>
+                      <dt>{t('Translation')}</dt>
+                      <dd>{card.vietnamese_meaning || t('Not provided')}</dd>
+                      <dt>{t('Part of speech')}</dt>
                       <dd>
                         {card.part_of_speech ? (
                           <PartOfSpeechBadge value={card.part_of_speech} />
@@ -386,9 +403,9 @@ export function Flashcards({
                           'Not provided'
                         )}
                       </dd>
-                      <dt>Example</dt>
+                      <dt>{t('Example')}</dt>
                       <dd className="card-example">
-                        {card.example_sentence || 'Not provided'}
+                        {card.example_sentence || t('Not provided')}
                       </dd>
                     </dl>
                     <button
@@ -397,13 +414,13 @@ export function Flashcards({
                       aria-pressed={true}
                       onClick={() => act({ type: 'flip' })}
                     >
-                      <span aria-hidden="true">⟳</span> Show word
+                      <span aria-hidden="true">⟳</span> {t('Show word')}
                     </button>
                   </div>
                 </div>
                 <button
                   className="study-arrow study-previous"
-                  aria-label="Previous"
+                  aria-label={t('Previous')}
                   aria-keyshortcuts="ArrowLeft"
                   disabled={busy || session.index === 0}
                   onClick={() => act({ type: 'previous' })}
@@ -412,7 +429,7 @@ export function Flashcards({
                 </button>
                 <button
                   className="study-arrow study-next"
-                  aria-label="Next"
+                  aria-label={t('Next')}
                   aria-keyshortcuts="ArrowRight"
                   disabled={busy || session.index === session.cards.length - 1}
                   onClick={() => act({ type: 'next' })}
@@ -423,41 +440,42 @@ export function Flashcards({
               <div className="study-review-controls">
                 <button
                   className="study-not-remembered"
-                  aria-label="Not remembered"
+                  aria-label={t('Not remembered')}
                   disabled={busy}
                   aria-pressed={review === 'not-remembered'}
                   onClick={() =>
                     act({ type: 'review', status: 'not-remembered' })
                   }
                 >
-                  <span aria-hidden="true">↻</span> Chưa thuộc
+                  <span aria-hidden="true">↻</span> {t('Chưa thuộc')}
                 </button>
                 <button
                   className="study-remembered"
-                  aria-label="Remembered"
+                  aria-label={t('Remembered')}
                   disabled={busy}
                   aria-pressed={review === 'remembered'}
                   onClick={() => act({ type: 'review', status: 'remembered' })}
                 >
-                  <span aria-hidden="true">✓</span> Đã học
+                  <span aria-hidden="true">✓</span> {t('Đã học')}
                 </button>
               </div>
               <p className="study-keyboard-hint">
-                Space: lật thẻ · ←: thẻ trước · →: thẻ tiếp theo
+                {t('Space: lật thẻ · ←: thẻ trước · →: thẻ tiếp theo')}
               </p>
               <p>
-                Remembered: {counts.remembered} · Not remembered:{' '}
-                {counts.notRemembered} · Unreviewed: {counts.unreviewed}
+                {t('Remembered:')} {counts.remembered} {t('· Not remembered:')}{' '}
+                {counts.notRemembered} {t('· Unreviewed:')} {counts.unreviewed}
               </p>
               <progress
-                aria-label="Review completion"
+                aria-label={t('Review completion')}
                 value={session.reviews.length}
                 max={session.cards.length}
               />
               {counts.unreviewed === 0 && (
                 <p>
-                  All cards reviewed. Revisit any card or restart these cards to
-                  practise again.
+                  {t(
+                    'All cards reviewed. Revisit any card or restart these cards to practise again.',
+                  )}
                 </p>
               )}
               <div className="study-toolbar">
@@ -465,7 +483,7 @@ export function Flashcards({
                   disabled={busy}
                   onClick={() => act({ type: 'shuffle' })}
                 >
-                  Shuffle current cards
+                  {t('Shuffle current cards')}
                 </button>
                 <button
                   disabled={busy}
@@ -474,19 +492,20 @@ export function Flashcards({
                     setRestartOpen(true)
                   }}
                 >
-                  Restart current cards
+                  {t('Restart current cards')}
                 </button>
               </div>
               <p>
-                Shuffle keeps your selected cards and review marks. Restart
-                keeps the same cards and clears review marks. Use Start new
-                session for a fresh sample.
+                {t(
+                  'Shuffle keeps your selected cards and review marks. Restart keeps the same cards and clears review marks. Use Start new session for a fresh sample.',
+                )}
               </p>
             </>
           )}
           <p className="study-footnote">
-            Progress is local to this browser profile. Clearing browser storage
-            removes it.
+            {t(
+              'Progress is local to this browser profile. Clearing browser storage removes it.',
+            )}
           </p>
         </>
       )}
@@ -503,14 +522,15 @@ export function Flashcards({
         <span className="restart-dialog-icon" aria-hidden="true">
           ↻
         </span>
-        <h2 id="restart-title">Bắt đầu lại bộ thẻ?</h2>
+        <h2 id="restart-title">{t('Bắt đầu lại bộ thẻ?')}</h2>
         <p id="restart-description">
-          Bạn sẽ quay về thẻ đầu tiên và xóa các đánh dấu Đã học / Chưa thuộc.
-          Bộ từ đã chọn vẫn được giữ nguyên.
+          {t(
+            'Bạn sẽ quay về thẻ đầu tiên và xóa các đánh dấu Đã học / Chưa thuộc. Bộ từ đã chọn vẫn được giữ nguyên.',
+          )}
         </p>
         {error && restartOpen && (
           <p role="alert" className="error">
-            {error}
+            {t(error)}
           </p>
         )}
         <div className="restart-dialog-actions">
@@ -519,14 +539,14 @@ export function Flashcards({
             disabled={busy}
             onClick={() => setRestartOpen(false)}
           >
-            Hủy
+            {t('Hủy')}
           </button>
           <button
             className="restart-confirm"
             disabled={busy}
             onClick={() => act({ type: 'restart' })}
           >
-            {busy ? 'Đang lưu…' : 'Bắt đầu lại'}
+            {busy ? t('Đang lưu…') : t('Bắt đầu lại')}
           </button>
         </div>
       </dialog>

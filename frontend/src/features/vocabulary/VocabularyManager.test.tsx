@@ -56,7 +56,7 @@ it.each(['add', 'edit'] as const)(
       )
       await user.click(screen.getByRole('button', { name: 'Add vocabulary' }))
       await user.type(screen.getByLabelText('Word'), 'hello')
-      await user.type(screen.getByLabelText('English meaning'), 'greeting')
+      await user.type(screen.getByLabelText('Definition'), 'greeting')
       await user.click(screen.getByRole('combobox', { name: 'Part of speech' }))
     }
     expect(
@@ -111,7 +111,7 @@ it.each(['add', 'edit'] as const)(
       )
       await user.click(screen.getByRole('button', { name: 'Add vocabulary' }))
       await user.type(screen.getByLabelText('Word'), 'hello')
-      await user.type(screen.getByLabelText('English meaning'), 'greeting')
+      await user.type(screen.getByLabelText('Definition'), 'greeting')
     }
     await user.type(screen.getByLabelText('Note'), 'line 1{Enter}line 2')
     expect(screen.getByLabelText('Note')).toHaveProperty(
@@ -149,7 +149,7 @@ it('preserves a failed-save draft, confirms discard, and warns before unloading'
   )
   await user.click(screen.getByRole('button', { name: 'Add vocabulary' }))
   await user.type(screen.getByLabelText('Word'), 'bank')
-  await user.type(screen.getByLabelText('English meaning'), 'river side')
+  await user.type(screen.getByLabelText('Definition'), 'river side')
   const event = new Event('beforeunload', { cancelable: true })
   window.dispatchEvent(event)
   expect(event.defaultPrevented).toBe(true)

@@ -3,6 +3,23 @@ import { equivalentMeanings, generateQuiz, normalize } from './generator'
 import { seededRandom, vocabulary, word } from './testSupport'
 
 describe('seeded question generation', () => {
+  it('keeps each shuffled definition paired with its translation snapshot', () => {
+    const rows = vocabulary(8).map((entry, index) => ({
+      ...entry,
+      vietnamese_meaning: `bản dịch ${index}`,
+    }))
+    const generated = generateQuiz(rows, 10, seededRandom(17))
+    expect(generated.questions.length).toBeGreaterThan(0)
+    for (const question of generated.questions) {
+      expect(question.translations).toHaveLength(4)
+      question.options.forEach((option, index) => {
+        expect(question.translations?.[index]).toBe(
+          rows.find((row) => row.english_meaning === option)
+            ?.vietnamese_meaning,
+        )
+      })
+    }
+  })
   it('does not assume translations with overlapping words and different qualifiers are equivalent', () => {
     const rows = vocabulary(6).map((row, i) => ({
       ...row,

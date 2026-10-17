@@ -56,6 +56,19 @@
   align-items: center;
   gap: 8px;
 }
+.quiz-navigation {
+  justify-content: center;
+}
+.quiz-answer-text {
+  display: grid;
+  gap: 6px;
+}
+.quiz-answer-translation {
+  font-size: 0.8rem;
+  font-weight: 400;
+  line-height: 1.5;
+  opacity: 0.85;
+}
 .quiz-card {
   padding: 32px;
   border: 1px solid var(--border);

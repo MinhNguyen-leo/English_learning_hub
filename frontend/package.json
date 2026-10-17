@@ -19,8 +19,11 @@
   },
   "dependencies": {
     "dexie": "^4.4.6",
+    "i18next": "^26.4.7",
+    "qrcode.react": "^4.2.0",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
+    "react-i18next": "^17.0.19",
     "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz"
   },
   "devDependencies": {

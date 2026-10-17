@@ -33,11 +33,14 @@ function object(
   value: unknown,
   path: string,
   keys: string[],
+  optionalKeys: string[] = [],
 ): Record<string, unknown> {
   if (!value || typeof value !== 'object' || Array.isArray(value)) fail(path)
   const row = value as Record<string, unknown>
   if (
-    Object.keys(row).length !== keys.length ||
+    Object.keys(row).some(
+      (key) => !keys.includes(key) && !optionalKeys.includes(key),
+    ) ||
     !keys.every((key) => Object.hasOwn(row, key))
   )
     fail(`${path} has missing or unknown fields`)
@@ -145,11 +148,12 @@ export function validateData(value: unknown): asserts value is BackupData {
       } else {
         const questions = array(session.questions, `${path}.questions`)
         questions.forEach((question, j) => {
-          const q = object(question, `${path}.questions[${j}]`, [
-            'target',
-            'options',
-            'correctIndex',
-          ])
+          const q = object(
+            question,
+            `${path}.questions[${j}]`,
+            ['target', 'options', 'correctIndex'],
+            ['translations'],
+          )
           vocabulary(q.target, `${path}.questions[${j}].target`)
         })
         unique(

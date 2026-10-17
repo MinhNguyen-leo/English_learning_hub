@@ -1,4 +1,5 @@
-﻿import { useEffect, useState } from 'react'
+import { useUiText } from '../lib/useUiText'
+import { useEffect, useState } from 'react'
 import { VocabularyManager } from '../features/vocabulary/VocabularyManager'
 import { Flashcards } from '../features/flashcards/Flashcards'
 import { Quiz } from '../features/quiz/Quiz'
@@ -17,6 +18,9 @@ import { Dashboard } from '../features/dashboard/Dashboard'
 import { IndexedDBDashboardRepository } from '../features/dashboard/repository'
 import { IndexedDBStreakRepository } from '../features/dashboard/streakRepository'
 import { useVisitStreak } from '../features/dashboard/useVisitStreak'
+import { Tutorial } from '../features/tutorial/Tutorial'
+import { LanguageSwitch } from '../features/language/LanguageSwitch'
+import { DonationQr } from '../features/donation/DonationQr'
 import './app.css'
 import './academy-theme.css'
 
@@ -39,6 +43,8 @@ async function loadRuntime() {
 }
 type Runtime = Awaited<ReturnType<typeof loadRuntime>>
 export default function App() {
+  const t = useUiText()
+
   const [runtime, setRuntime] = useState<Runtime | null>(null)
   const [error, setError] = useState('')
   useEffect(() => {
@@ -65,13 +71,19 @@ export default function App() {
         {error ? (
           <>
             <p role="alert">
-              Local storage could not be opened: {error}. Existing data was
-              retained. Close other tabs and reload to retry.
+              {t('Local storage could not be opened:')} {t(error)}
+              {t(
+                '. Existing data was retained. Close other tabs and reload to retry.',
+              )}
             </p>
-            <button onClick={() => window.location.reload()}>Reload</button>
+            <button onClick={() => window.location.reload()}>
+              {t('Reload')}
+            </button>
           </>
         ) : (
-          <p role="status">Opening local vocabulary and study progress…</p>
+          <p role="status">
+            {t('Opening local vocabulary and study progress…')}
+          </p>
         )}
       </main>
     )
@@ -89,6 +101,8 @@ function LearningHub({
   runtime: Runtime
   onRestored: () => Promise<void>
 }) {
+  const t = useUiText()
+
   const { repository, progress, quizProgress } = runtime
   const streak = useVisitStreak(streakRepository)
   const [view, setView] = useState<
@@ -97,6 +111,7 @@ function LearningHub({
   const [studyOpened, setStudyOpened] = useState(false)
   const [quizOpened, setQuizOpened] = useState(false)
   const [dataOpened, setDataOpened] = useState(false)
+  const [tutorialOpen, setTutorialOpen] = useState(false)
   const [settingsError, setSettingsError] = useState('')
   function savePreference(
     patch: Partial<Pick<AppSettings, 'flashcardSize' | 'quizSize'>>,
@@ -141,10 +156,10 @@ function LearningHub({
             </svg>
           </span>
           <span>
-            English Hub<small>YOUR LEARNING SPACE</small>
+            English Hub<small>{t('YOUR LEARNING SPACE')}</small>
           </span>
         </a>
-        <nav className="app-navigation" aria-label="Learning features">
+        <nav className="app-navigation" aria-label={t('Learning features')}>
           <button
             aria-pressed={view === 'dashboard'}
             onClick={() => setView('dashboard')}
@@ -152,7 +167,7 @@ function LearningHub({
             <span className="nav-icon" aria-hidden="true">
               ⌂
             </span>
-            Dashboard
+            {t('Dashboard')}
           </button>
           <button
             aria-pressed={view === 'vocabulary'}
@@ -161,7 +176,7 @@ function LearningHub({
             <span className="nav-icon" aria-hidden="true">
               ▤
             </span>
-            Vocabulary
+            {t('Vocabulary')}
           </button>
           <button
             aria-pressed={view === 'flashcards'}
@@ -173,7 +188,7 @@ function LearningHub({
             <span className="nav-icon" aria-hidden="true">
               ▱
             </span>
-            Flashcards
+            {t('Flashcards')}
           </button>
           <button
             aria-pressed={view === 'quiz'}
@@ -185,7 +200,7 @@ function LearningHub({
             <span className="nav-icon" aria-hidden="true">
               ✓
             </span>
-            Quiz
+            {t('Quiz')}
           </button>
           <button
             aria-pressed={view === 'data'}
@@ -197,21 +212,30 @@ function LearningHub({
             <span className="nav-icon" aria-hidden="true">
               ⇅
             </span>
-            Data Management
+            {t('Data Management')}
           </button>
         </nav>
-        <span className="device-badge">
-          <span aria-hidden="true">●</span> Saved on this device
-        </span>
+        <div className="header-tools">
+          <LanguageSwitch />
+          <button
+            className="tutorial-trigger"
+            onClick={() => setTutorialOpen(true)}
+            aria-haspopup="dialog"
+          >
+            <span aria-hidden="true">▱</span>
+            {t('Tutorial')}
+          </button>
+        </div>
       </header>
+      {tutorialOpen && <Tutorial onClose={() => setTutorialOpen(false)} />}
       <div className="app-workspace">
         <header className="app-topbar">
           <div className="workspace-title">
-            <span className="topbar-label">Your workspace</span>
+            <span className="topbar-label">{t('Your workspace')}</span>
             <strong>
               {view === 'data'
-                ? 'Data Management'
-                : view.charAt(0).toUpperCase() + view.slice(1)}
+                ? t('Data Management')
+                : t(view.charAt(0).toUpperCase() + view.slice(1))}
             </strong>
           </div>
           <svg
@@ -241,42 +265,58 @@ function LearningHub({
             />
             <circle cx="170" cy="77" r="4" fill="currentColor" />
           </svg>
-          <div className="workspace-profile">
-            <div className="local-badge">
-              <span className="contact-feedback">feedback to me at ins:</span>
-              <span className="contact-donate">donate hay bị chan</span>
-              <span className="contact-bank">0933133496 vietinbank</span>
-            </div>
-            <a
-              className="profile-avatar"
-              href="https://www.instagram.com/t_minleo/"
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label="Instagram t_minleo (opens in a new tab)"
+          <div className="contact-panels">
+            <section
+              className="workspace-profile"
+              aria-labelledby="feedback-title"
             >
-              <svg
-                width="22"
-                height="22"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.8"
-                aria-hidden="true"
+              <div className="local-badge">
+                <span className="contact-feedback" id="feedback-title">
+                  {t('Feedback to me at ins')}
+                </span>
+              </div>
+              <a
+                className="profile-avatar"
+                href="https://www.instagram.com/t_minleo/"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label={t('Instagram t_minleo (opens in a new tab)')}
               >
-                <rect x="3" y="3" width="18" height="18" rx="5" />
-                <circle cx="12" cy="12" r="4" />
-                <circle
-                  cx="17.5"
-                  cy="6.5"
-                  r="1"
-                  fill="currentColor"
-                  stroke="none"
-                />
-              </svg>
-            </a>
+                <svg
+                  width="22"
+                  height="22"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                  aria-hidden="true"
+                >
+                  <rect x="3" y="3" width="18" height="18" rx="5" />
+                  <circle cx="12" cy="12" r="4" />
+                  <circle
+                    cx="17.5"
+                    cy="6.5"
+                    r="1"
+                    fill="currentColor"
+                    stroke="none"
+                  />
+                </svg>
+              </a>
+            </section>
+            <section
+              className="workspace-profile support-panel"
+              aria-labelledby="support-title"
+            >
+              <div className="local-badge">
+                <span className="contact-feedback" id="support-title">
+                  {t('Support my work')}
+                </span>
+                <DonationQr compact />
+              </div>
+            </section>
           </div>
         </header>
-        {settingsError && <p role="alert">{settingsError}</p>}
+        {settingsError && <p role="alert">{t(settingsError)}</p>}
         {view === 'dashboard' && (
           <Dashboard
             repository={dashboard}
@@ -337,9 +377,11 @@ function LearningHub({
             English Hub<span aria-hidden="true">.</span>
           </a>
           <p>
-            A little practice, every day. Your words. Your pace. Your progress.
+            {t(
+              'A little practice, every day. Your words. Your pace. Your progress.',
+            )}
           </p>
-          <span>Made for curious minds.</span>
+          <span>{t('Made for curious minds.')}</span>
         </footer>
       </div>
     </div>

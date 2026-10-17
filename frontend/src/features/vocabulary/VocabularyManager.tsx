@@ -1,3 +1,5 @@
+import { useUiText } from '../../lib/useUiText'
+import i18n from '../../lib/i18n'
 import { lazy, Suspense, useEffect, useState } from 'react'
 import {
   emptyInput,
@@ -12,6 +14,7 @@ import {
 import type { VocabularyRepository } from './repository'
 import './vocabulary.css'
 import { PartOfSpeechBadge, PartOfSpeechPicker } from './PartOfSpeechPicker'
+import { VocabularyTableScroll } from './VocabularyTableScroll'
 type Draft = { original: Vocabulary | null; input: VocabularyInput }
 const SpreadsheetPanel = lazy(() => import('../spreadsheet/SpreadsheetPanel'))
 export function VocabularyManager({
@@ -19,6 +22,17 @@ export function VocabularyManager({
 }: {
   repository: VocabularyRepository
 }) {
+  const t = useUiText()
+  function fieldLabel(key: Field) {
+    return t(
+      key === 'english_meaning'
+        ? 'Definition'
+        : key === 'vietnamese_meaning'
+          ? 'Translation'
+          : fields[key].label,
+    )
+  }
+
   const [rows, setRows] = useState<Vocabulary[]>([])
   const [excelOpen, setExcelOpen] = useState(false)
   const [loading, setLoading] = useState(true)
@@ -73,7 +87,7 @@ export function VocabularyManager({
     }
   }
   function start(original: Vocabulary | null, field: Field = 'word') {
-    if (dirty && !window.confirm('Discard your unsaved changes?')) return
+    if (dirty && !window.confirm(t('Discard your unsaved changes?'))) return
     setActiveField(field)
     setDraft({
       original,
@@ -84,7 +98,7 @@ export function VocabularyManager({
     setStatus('')
   }
   function cancel() {
-    if (dirty && !window.confirm('Discard your unsaved changes?')) return
+    if (dirty && !window.confirm(t('Discard your unsaved changes?'))) return
     setDraft(null)
     setErrors({})
     setError('')
@@ -119,7 +133,9 @@ export function VocabularyManager({
   async function remove(row: Vocabulary) {
     if (
       !window.confirm(
-        `Delete "${row.word}" and its meanings? This cannot be undone.`,
+        t('Delete "{{value0}}" and its meanings? This cannot be undone.', {
+          value0: row.word,
+        }),
       )
     )
       return
@@ -146,7 +162,9 @@ export function VocabularyManager({
             autoFocus={key === activeField}
             title={
               draft?.original
-                ? `Added: ${formatDate(draft.original.created_at)}`
+                ? t('Added: {{value0}}', {
+                    value0: formatDate(draft.original.created_at),
+                  })
                 : undefined
             }
             error={errors[key]}
@@ -164,13 +182,15 @@ export function VocabularyManager({
           />
         ) : (
           <textarea
-            aria-label={fields[key].label}
+            aria-label={fieldLabel(key)}
             aria-invalid={Boolean(errors[key])}
             aria-describedby={errors[key] ? `error-${key}` : undefined}
             value={input[key]}
             title={
               draft?.original
-                ? `Added: ${formatDate(draft.original.created_at)}`
+                ? t('Added: {{value0}}', {
+                    value0: formatDate(draft.original.created_at),
+                  })
                 : undefined
             }
             disabled={busy}
@@ -202,7 +222,7 @@ export function VocabularyManager({
         )}
         {errors[key] && (
           <span className="field-error" id={`error-${key}`}>
-            {errors[key]}
+            {t(errors[key])}
           </span>
         )}
       </td>
@@ -216,25 +236,27 @@ export function VocabularyManager({
   const actions = (
     <td className="actions">
       <button disabled={busy} onClick={() => void save()}>
-        {busy ? 'Saving...' : 'Save'}
+        {busy ? t('Saving...') : t('Save')}
       </button>
       <button disabled={busy} onClick={cancel}>
-        Cancel
+        {t('Cancel')}
       </button>
     </td>
   )
   return (
     <main className="vocabulary-manager">
       <header>
-        <p className="eyebrow">ENGLISH LEARNING HUB / GUEST LIBRARY</p>
-        <h1>My vocabulary</h1>
+        <p className="eyebrow">{t('ENGLISH LEARNING HUB / GUEST LIBRARY')}</p>
+        <h1>{t('My vocabulary')}</h1>
         <p>
-          Build your vocabulary, one meaning at a time. Entries stay in this
-          browser and work offline once the app is loaded.
+          {t(
+            'Build your vocabulary, one meaning at a time. Entries stay in this browser and work offline once the app is loaded.',
+          )}
         </p>
         <p className="storage-note">
-          Clearing browser data removes this library. Word and at least one
-          meaning are required. Save each row to commit your changes.
+          {t(
+            'Clearing browser data removes this library. Word and at least one meaning are required. Save each row to commit your changes.',
+          )}
         </p>
       </header>
       {excelOpen ? (
@@ -255,28 +277,28 @@ export function VocabularyManager({
           disabled={loading || busy || draft !== null}
           onClick={() => setExcelOpen(true)}
         >
-          Excel import / export
+          {t('Excel import / export')}
         </button>
       )}
       <fieldset disabled={excelOpen}>
         <div className="toolbar">
           <label>
-            Search
+            {t('Search')}
             <input
               type="search"
               value={search}
-              placeholder="Search any vocabulary field"
+              placeholder={t('Search any vocabulary field')}
               onChange={(event) => setSearch(event.target.value)}
             />
           </label>
           <label>
-            Part of speech
+            {t('Part of speech')}
             <select
-              aria-label="Filter by part of speech"
+              aria-label={t('Filter by part of speech')}
               value={part}
               onChange={(event) => setPart(event.target.value)}
             >
-              <option value="">All parts of speech</option>
+              <option value="">{t('All parts of speech')}</option>
               {[
                 ...new Set(
                   rows.map((row) => row.part_of_speech).filter(Boolean),
@@ -289,7 +311,7 @@ export function VocabularyManager({
             </select>
           </label>
           <label>
-            Sort by
+            {t('Sort by')}
             <select
               value={sort}
               onChange={(event) =>
@@ -299,71 +321,73 @@ export function VocabularyManager({
               {[...fieldNames, 'created_at', 'updated_at'].map((key) => (
                 <option key={key} value={key}>
                   {key in fields
-                    ? fields[key as Field].label
+                    ? fieldLabel(key as Field)
                     : key === 'created_at'
-                      ? 'Created'
-                      : 'Updated'}
+                      ? t('Created')
+                      : t('Updated')}
                 </option>
               ))}
             </select>
           </label>
           <label>
-            Order
+            {t('Order')}
             <select
               value={direction}
               onChange={(event) =>
                 setDirection(event.target.value as 'asc' | 'desc')
               }
             >
-              <option value="asc">Ascending</option>
-              <option value="desc">Descending</option>
+              <option value="asc">{t('Ascending')}</option>
+              <option value="desc">{t('Descending')}</option>
             </select>
           </label>
           <button disabled={loading || busy} onClick={() => start(null)}>
-            Add vocabulary
+            {t('Add vocabulary')}
           </button>
           <button
             disabled={loading || busy || draft !== null}
             onClick={() => void reload()}
           >
-            Reload entries
+            {t('Reload entries')}
           </button>
         </div>
         {error && (
           <p role="alert" className="error">
-            {error}
+            {t(error)}
           </p>
         )}
         <p role="status">
           {loading
-            ? 'Loading vocabulary...'
-            : status || `${visible.length} of ${rows.length} entries`}
+            ? t('Loading vocabulary...')
+            : t(status) ||
+              t('{{value0}} of {{value1}} entries', {
+                value0: visible.length,
+                value1: rows.length,
+              })}
         </p>
         {draft && (
           <p className="draft-note">
-            {dirty ? 'Unsaved changes. ' : ''}Tab between cells, then Save or
-            press Shift + Enter. Cancel asks before discarding changes.
+            {dirty ? t('Unsaved changes. ') : ''}
+            {t(
+              'Tab between cells, then Save or press Shift + Enter. Cancel asks before discarding changes.',
+            )}
           </p>
         )}
-        <div
-          className="table-scroll"
-          role="region"
-          aria-label="Vocabulary table"
-          tabIndex={0}
-        >
+        <VocabularyTableScroll editing={draft !== null}>
           <table>
             <caption className="sr-only">
-              Guest vocabulary. Double-click a vocabulary cell or press Enter on
-              it to edit, then Save or Cancel.
+              {t(
+                'Guest vocabulary. Double-click a vocabulary cell or press Enter on it to edit, then Save or Cancel.',
+              )}
             </caption>
             <thead>
               <tr>
                 {fieldNames.map((key) => (
                   <th key={key} scope="col">
-                    {fields[key].label}
+                    {fieldLabel(key)}
                   </th>
                 ))}
-                <th scope="col">Actions</th>
+                <th scope="col">{t('Actions')}</th>
               </tr>
             </thead>
             <tbody>
@@ -386,9 +410,14 @@ export function VocabularyManager({
                         <td key={key} className="editable-cell">
                           <button
                             className="cell-value"
-                            title={`Added: ${formatDate(row.created_at)}`}
+                            title={t('Added: {{value0}}', {
+                              value0: formatDate(row.created_at),
+                            })}
                             disabled={busy}
-                            aria-label={`${fields[key].label} for ${row.word}`}
+                            aria-label={t('{{value0}} for {{value1}}', {
+                              value0: fieldLabel(key),
+                              value1: row.word,
+                            })}
                             onDoubleClick={() => start(row, key)}
                             onKeyDown={(event) => {
                               if (event.key === 'Enter' || event.key === ' ') {
@@ -408,10 +437,12 @@ export function VocabularyManager({
                       <td className="actions">
                         <button
                           disabled={busy || draft !== null}
-                          aria-label={`Delete ${row.word}`}
+                          aria-label={t('Delete {{value0}}', {
+                            value0: row.word,
+                          })}
                           onClick={() => void remove(row)}
                         >
-                          Delete
+                          {t('Delete')}
                         </button>
                       </td>
                     </>
@@ -420,12 +451,12 @@ export function VocabularyManager({
               ))}
             </tbody>
           </table>
-        </div>
+        </VocabularyTableScroll>
         {!loading && !displayed.length && !draft && (
           <p className="empty">
             {rows.length
-              ? 'No entries match your search or filter.'
-              : 'Your library is empty. Add your first word to get started.'}
+              ? t('No entries match your search or filter.')
+              : t('Your library is empty. Add your first word to get started.')}
           </p>
         )}
       </fieldset>
@@ -438,5 +469,5 @@ function message(reason: unknown) {
     : 'Something went wrong. Keep your draft and retry.'
 }
 function formatDate(value: string) {
-  return new Date(value).toLocaleString()
+  return new Date(value).toLocaleString(i18n.resolvedLanguage)
 }

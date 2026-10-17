@@ -55,6 +55,39 @@ async function start(user: ReturnType<typeof userEvent.setup>) {
   await user.click(screen.getByRole('button', { name: 'Start quiz' }))
   await screen.findByRole('region', { name: 'Quiz question' })
 }
+it.each([true, false])(
+  'reveals translation snapshots for every option only after answering (correct: %s)',
+  async (correct) => {
+    const deps = dependencies()
+    const words = vocabulary(4).map((entry, index) => ({
+      ...entry,
+      vietnamese_meaning: `bản dịch ${index}`,
+    }))
+    vi.mocked(deps.repository.list).mockResolvedValue(words)
+    const user = userEvent.setup()
+    render(<Quiz {...deps} />)
+    await start(user)
+    await user.click(
+      screen.getByRole('checkbox', {
+        name: 'Automatically advance after feedback',
+      }),
+    )
+    expect(screen.queryByText(/bản dịch/)).toBeNull()
+    const question = (await deps.progress.load())!.session.questions[0]!
+    vi.mocked(deps.repository.list).mockResolvedValue([])
+    await user.click(
+      screen.getAllByRole('radio')[
+        correct ? question.correctIndex : (question.correctIndex + 1) % 4
+      ]!,
+    )
+    for (const [index, option] of question.options.entries()) {
+      const label = screen.getByText(option).closest('label')!
+      expect(
+        within(label).getByText(question.translations![index]!),
+      ).toBeTruthy()
+    }
+  },
+)
 it('allows radio arrow navigation without submitting an answer', async () => {
   const deps = dependencies(),
     user = userEvent.setup()
@@ -249,7 +282,7 @@ it('keeps the selected answer and previous score after a failed save, then retri
   expect((await deps.progress.load())?.session.answers[0]).toBe(0)
 })
 it.each([true, false])(
-  'automatically advances after 1.5s for correct and 2.5s for incorrect answers (correct: %s)',
+  'automatically advances after 2s for correct and 3s for incorrect answers (correct: %s)',
   async (correct) => {
     const deps = dependencies(),
       user = userEvent.setup()
@@ -268,11 +301,11 @@ it.each([true, false])(
     expect(screen.getByText(/Correct answer:/)).toBeTruthy()
     expect(
       screen.getByRole('img', {
-        name: 'Thời gian còn lại trước khi tự chuyển câu',
+        name: 'Time remaining before the next question',
       }),
     ).toBeTruthy()
     await reactAct(async () => {
-      await vi.advanceTimersByTimeAsync((correct ? 1500 : 2500) - 1)
+      await vi.advanceTimersByTimeAsync((correct ? 2000 : 3000) - 1)
     })
     expect(screen.getByText(/Question 1 of 4/)).toBeTruthy()
     await reactAct(async () => {
@@ -281,7 +314,7 @@ it.each([true, false])(
     expect(screen.getByText(/Question 2 of 4/)).toBeTruthy()
     expect(
       screen.queryByRole('img', {
-        name: 'Thời gian còn lại trước khi tự chuyển câu',
+        name: 'Time remaining before the next question',
       }),
     ).toBeNull()
     await reactAct(async () => {
