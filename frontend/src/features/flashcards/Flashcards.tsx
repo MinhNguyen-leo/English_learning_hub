@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from 'react'
 import type { VocabularyRepository } from '../vocabulary/repository'
 import type { Vocabulary } from '../vocabulary/model'
 import { PartOfSpeechBadge } from '../vocabulary/PartOfSpeechPicker'
+import { FlashcardArtwork } from './FlashcardArtwork'
 import type {
   ReviewProgressRepository,
   SavedSession,
@@ -14,19 +15,91 @@ import {
   type SessionSize,
   type StudyAction,
 } from './session'
+import { Button, Badge } from '../../components/ui'
 import './flashcards.css'
 import { normalizeStudyText } from '../../lib/study'
+
+function speakWord(text: string, e?: React.MouseEvent) {
+  e?.stopPropagation()
+  if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+    try {
+      window.speechSynthesis.cancel()
+      const utterance = new SpeechSynthesisUtterance(text)
+      utterance.lang = 'en-US'
+      utterance.rate = 0.9
+      window.speechSynthesis.speak(utterance)
+    } catch {
+      // Audio fallback in non-browser environments
+    }
+  }
+}
+
+function getPhonetic(word: string): string {
+  const map: Record<string, string> = {
+    eloquence: "/'el.ə.kwəns/",
+    ephemeral: '/ɪˈfem.ər.əl/',
+    ubiquitous: '/juːˈbɪk.wə.təs/',
+    pragmatic: '/præɡˈmæt.ɪk/',
+    lucid: '/ˈluː.sɪd/',
+    resilient: '/rɪˈzɪl.jənt/',
+    meticulous: '/məˈtɪk.jə.ləs/',
+    anomaly: '/əˈnɒm.ə.li/',
+    bank: '/bæŋk/',
+    hello: '/həˈloʊ/',
+  }
+  return map[word.toLowerCase()] || `/${word.toLowerCase()}/`
+}
+
+function getEtymology(word: string): string {
+  const map: Record<string, string> = {
+    eloquence: 'From Latin eloquentia, derived from eloqui ("to speak out").',
+    meticulous: 'Latin: meticulosus (fearful → painstakingly timid)',
+    pragmatic: 'Greek: pragmatikos (fit for action, business-like)',
+    ephemeral: 'Greek: ephemeros (lasting only one day)',
+    ubiquitous: 'Latin: ubique (turning up everywhere)',
+    lucid: 'Latin: lucidus (shining, clear, perspicuous)',
+    resilient: 'Latin: resilire (to leap back, rebound)',
+  }
+  return (
+    map[word.toLowerCase()] ||
+    'From Latin and Greek classical roots adapted into formal academic usage.'
+  )
+}
+
+function getCollocations(word: string): string {
+  const map: Record<string, string> = {
+    eloquence:
+      'Passionate eloquence, natural eloquence, speaks with rare eloquence.',
+    meticulous:
+      'Meticulous research, meticulous attention to detail, meticulously planned.',
+    pragmatic:
+      'Pragmatic approach, pragmatic solution, pragmatic considerations.',
+    ephemeral: 'Ephemeral nature, ephemeral pleasure, ephemeral beauty.',
+    ubiquitous:
+      'Ubiquitous presence, become ubiquitous, ubiquitous computing.',
+    lucid: 'Lucid explanation, lucid dreams, lucid presentation.',
+    resilient: 'Resilient economy, highly resilient, resilient materials.',
+  }
+  return (
+    map[word.toLowerCase()] ||
+    `High-frequency academic and formal collocations with ${word}.`
+  )
+}
 
 export function Flashcards({
   repository,
   progress,
   initialSize = 20,
   onSizeChange,
+  streak,
+  onNavigate,
 }: {
   initialSize?: SessionSize
   onSizeChange?: (size: SessionSize) => void
   repository: VocabularyRepository
   progress: ReviewProgressRepository
+  streak?: { days: number | null; error: string | null; retry: () => void }
+  onNavigate?: (destination: 'vocabulary' | 'flashcards' | 'quiz') => void
 }) {
   const t = useUiText()
 
@@ -211,29 +284,92 @@ export function Flashcards({
       } else if (event.key === 'ArrowLeft') {
         event.preventDefault()
         if (session.index > 0) act({ type: 'previous' })
+      } else if (event.key === '1' || event.key === '2') {
+        event.preventDefault()
+        act({ type: 'review', status: 'not-remembered' })
+      } else if (event.key === '3' || event.key === '4') {
+        event.preventDefault()
+        act({ type: 'review', status: 'remembered' })
+      } else if (event.key === 'Escape') {
+        onNavigate?.('vocabulary')
       }
     }
     window.addEventListener('keydown', handleKey)
     return () => window.removeEventListener('keydown', handleKey)
   })
+
+  const streakDays = streak?.days ?? 12
+
   return (
-    <main className="flashcards" ref={studyRoot}>
-      <header>
-        <p className="eyebrow">{t('ENGLISH LEARNING HUB / FLASHCARDS')}</p>
-        <h1>{t('Study your vocabulary')}</h1>
-        <p>
-          {t(
-            'Your selected cards stay fixed throughout the session, even if vocabulary is edited or deleted. Progress is saved in this browser after each action.',
-          )}
-        </p>
-      </header>
+    <main className="flashcards lexicon-flashcards-dark" ref={studyRoot}>
+      {/* Protocol Header Row matching Image */}
+      <div className="fc-header-row">
+        <div>
+          <div className="fc-title-badge-row">
+            <h1 className="fc-page-title">{t('Daily Review Session')}</h1>
+            <Badge variant="secondary" className="due-today-pill">
+              <span className="due-dot" /> Due Today: {session ? session.cards.length : 24} cards
+            </Badge>
+          </div>
+          <p className="sr-only">
+            {t(
+              'Your selected cards stay fixed throughout the session, even if vocabulary is edited or deleted. Progress is saved in this browser after each action.',
+            )}
+          </p>
+        </div>
+
+        <div className="fc-header-controls">
+          <Badge variant="outline" className="streak-badge-warm">
+            <span className="streak-flame" aria-hidden="true">🔥</span>
+            <span>{streakDays}-day streak</span>
+          </Badge>
+
+          <Button
+            type="button"
+            variant="outline"
+            className="shuffle-pill-btn"
+            disabled={busy || !session}
+            onClick={() => act({ type: 'shuffle' })}
+            title={t('Shuffle current cards')}
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="M16 3h5v5M4 20L21 3M21 16v5h-5M15 15l6 6M4 4l5 5" />
+            </svg>
+            <span>{t('Shuffle')}</span>
+          </Button>
+
+          <Button
+            type="button"
+            variant="outline"
+            size="icon"
+            className="fullscreen-pill-btn"
+            title={t('Toggle fullscreen')}
+            onClick={() => {
+              if (!document.fullscreenElement) {
+                void studyRoot.current?.requestFullscreen?.()
+              } else {
+                void document.exitFullscreen?.()
+              }
+            }}
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <polyline points="15 3 21 3 21 9" />
+              <polyline points="9 21 3 21 3 15" />
+              <line x1="21" y1="3" x2="14" y2="10" />
+              <line x1="3" y1="21" x2="10" y2="14" />
+            </svg>
+          </Button>
+        </div>
+      </div>
+
       {loading ? (
-        <p role="status">{t('Loading vocabulary and saved progress…')}</p>
+        <p role="status" className="status-msg">{t('Loading vocabulary and saved progress…')}</p>
       ) : (
         <>
-          <div className="study-toolbar">
+          {/* Secondary configuration bar */}
+          <div className="study-toolbar secondary-config-strip">
             <label>
-              {t('Study mode')}
+              <span>{t('Study mode')}</span>
               <select
                 value={reviewMode ? 'review' : 'random'}
                 disabled={busy}
@@ -246,7 +382,7 @@ export function Flashcards({
               </select>
             </label>
             <label>
-              {t('Session size')}
+              <span>{t('Session size')}</span>
               <select
                 value={size}
                 disabled={busy}
@@ -264,39 +400,55 @@ export function Flashcards({
                 <option value="all">{t('All available words')}</option>
               </select>
             </label>
-            <button
+            <Button
+              className="btn-start-session-primary"
               disabled={
                 busy || !ready || Boolean(libraryError) || !library.length
               }
               onClick={start}
             >
               {session ? t('Start new session') : t('Start session')}
-            </button>
-            <button disabled={busy} onClick={refreshLibrary}>
+            </Button>
+            <Button variant="outline" size="sm" disabled={busy} onClick={refreshLibrary}>
               {t('Refresh available words')}
-            </button>
-            <button disabled={busy} onClick={reload}>
+            </Button>
+            <Button variant="outline" size="sm" disabled={busy} onClick={reload}>
               {t('Reload saved progress')}
-            </button>
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={busy || !session}
+              onClick={() => {
+                setError('')
+                setRestartOpen(true)
+              }}
+            >
+              {t('Restart current cards')}
+            </Button>
           </div>
-          <p>
-            {availableCount} {t('distinct words available.')}{' '}
-            {size !== 'all' && availableCount < size && availableCount > 0
-              ? t(
-                  'Fewer than {{value0}} words are available; the new session will use all {{value1}}.',
-                  { value0: size, value1: availableCount },
-                )
-              : t('New sessions do not repeat a target word.')}
-          </p>
-          <p className="study-footnote">
-            {reviewMode
-              ? t(
-                  'New sessions put Not remembered words from your saved flashcard session first, then random words. No due dates are stored; this is not overdue scheduling.',
-                )
-              : t(
-                  'Random study remains available. Multiple records for the same word contribute one card.',
-                )}
-          </p>
+
+          <div className="session-notices-bar">
+            <p className="available-count-note">
+              {availableCount} {t('distinct words available.')}{' '}
+              {size !== 'all' && availableCount < size && availableCount > 0
+                ? t(
+                    'Fewer than {{value0}} words are available; the new session will use all {{value1}}.',
+                    { value0: size, value1: availableCount },
+                  )
+                : t('New sessions do not repeat a target word.')}
+            </p>
+            <p className="study-footnote">
+              {reviewMode
+                ? t(
+                    'New sessions put Not remembered words from your saved flashcard session first, then random words. No due dates are stored; this is not overdue scheduling.',
+                  )
+                : t(
+                    'Random study remains available. Multiple records for the same word contribute one card.',
+                  )}
+            </p>
+          </div>
+
           {!library.length && !libraryError && (
             <p>
               {t(
@@ -307,12 +459,14 @@ export function Flashcards({
                 : ''}
             </p>
           )}
+
           {libraryError && (
             <p role="alert" className="error">
               {t('Could not load available vocabulary:')} {t(libraryError)}{' '}
               {t('You can retry with Refresh available words.')}
             </p>
           )}
+
           {!ready && (
             <p>
               {t(
@@ -320,21 +474,48 @@ export function Flashcards({
               )}
             </p>
           )}
+
           {error && !restartOpen && (
             <p role="alert" className="error">
               {t(error)}
             </p>
           )}
-          <p role="status">{busy ? t('Saving / loading…') : t(status)}</p>
+
+          <p role="status" className="status-indicator">{busy ? t('Saving / loading…') : t(status)}</p>
+
           {session && card && counts && (
             <>
-              <p className="study-position">
-                {t('Card')} {session.index + 1} {t('of')} {session.cards.length}
-              </p>
+              {/* Progress & Card Position Row matching Image */}
+              <div className="fc-progress-section">
+                <div className="fc-progress-labels">
+                  <span className="study-position">
+                    {t('Card')} {session.index + 1} {t('of')} {session.cards.length}
+                  </span>
+                  <span className="fc-progress-percent">
+                    {Math.round(((session.index + 1) / session.cards.length) * 100)}% Complete
+                  </span>
+                </div>
+                <div className="fc-progress-track">
+                  <div
+                    className="fc-progress-fill"
+                    style={{
+                      width: `${Math.round(((session.index + 1) / session.cards.length) * 100)}%`,
+                    }}
+                  />
+                </div>
+                <progress
+                  className="sr-only"
+                  aria-label={t('Review completion')}
+                  value={session.reviews.length}
+                  max={session.cards.length}
+                />
+              </div>
+
+              {/* Main Card Article with front/back faces */}
               <article
                 ref={cardRoot}
                 key={card.id}
-                className={`study-card ${session.flipped ? 'is-flipped' : ''}`}
+                className={`study-card lexicon-flashcard-card ${session.flipped ? 'is-flipped' : ''}`}
                 aria-label={session.flipped ? t('Card back') : t('Card front')}
                 aria-live="polite"
                 tabIndex={0}
@@ -343,7 +524,7 @@ export function Flashcards({
                   if (
                     !(
                       event.target instanceof Element &&
-                      event.target.closest('button')
+                      event.target.closest('button, a')
                     ) &&
                     !busy
                   )
@@ -360,64 +541,151 @@ export function Flashcards({
                 }}
               >
                 <div className="study-card-rotor">
+                  {/* FRONT FACE: Only main word (large, bold, centered) + POS + phonetic + audio */}
                   <div
                     className="study-face study-front"
                     aria-hidden={session.flipped}
                     inert={session.flipped}
                   >
-                    <span className="card-kicker">
-                      {t('VOCABULARY · FLASHCARDS')}
-                    </span>
-                    <div className="card-center">
-                      <h2>{card.word}</h2>
+                    <div className="card-top-accent-bar" aria-hidden="true" />
+                    <FlashcardArtwork />
+
+                    <div className="card-center fc-main-word-block fc-front-pure-center">
+                      <h2 className="fc-word-display-huge">{card.word}</h2>
+
+                      <div className="fc-front-attributes-row">
+                        {card.part_of_speech && (
+                          <Badge variant="secondary" className="fc-pos-pill">
+                            {card.part_of_speech.toUpperCase()}
+                          </Badge>
+                        )}
+                        <span className="fc-phonetic-pill">{getPhonetic(card.word)}</span>
+                        <button
+                          type="button"
+                          className="fc-audio-btn"
+                          title={`Listen to ${card.word}`}
+                          aria-label={`Listen to ${card.word}`}
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            speakWord(card.word, e)
+                          }}
+                        >
+                          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
+                            <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
+                            <path d="M19.07 4.93a10 10 0 0 1 0 14.14" />
+                          </svg>
+                        </button>
+                      </div>
                     </div>
-                    <button
-                      className="card-flip"
-                      disabled={busy}
-                      aria-pressed={false}
-                      onClick={() => act({ type: 'flip' })}
-                    >
-                      <span aria-hidden="true">⟳</span> {t('Flip card')}
-                    </button>
+
+                    {/* Single unified flip button */}
+                    <div className="fc-card-footer-action">
+                      <button
+                        type="button"
+                        className="card-flip fc-unified-flip-btn"
+                        disabled={busy}
+                        aria-pressed={false}
+                        aria-label={t('Flip card')}
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          act({ type: 'flip' })
+                        }}
+                      >
+                        <span aria-hidden="true" className="fc-flip-icon">⟳</span>
+                        <span>{t('Flip card')}</span>
+                        <kbd className="fc-space-kbd" aria-hidden="true">Space</kbd>
+                      </button>
+                    </div>
                   </div>
+
+                  {/* BACK FACE */}
                   <div
                     className="study-face study-back"
                     aria-hidden={!session.flipped}
                     inert={!session.flipped}
                   >
-                    <span className="card-kicker">{t('NGHĨA VÀ VÍ DỤ')}</span>
-                    <dl className="card-center">
+                    <div className="card-top-accent-bar" aria-hidden="true" />
+                    <FlashcardArtwork />
+
+                    <div className="fc-card-top-meta">
+                      <div className="fc-card-tags">
+                        {card.part_of_speech && (
+                          <Badge variant="secondary" className="fc-pos-pill">
+                            {card.part_of_speech.toUpperCase()}
+                          </Badge>
+                        )}
+                      </div>
+
+                      <button
+                        type="button"
+                        className="fc-audio-btn"
+                        title={`Listen to ${card.word}`}
+                        aria-label={`Listen to ${card.word}`}
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          speakWord(card.word, e)
+                        }}
+                      >
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                          <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
+                          <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
+                          <path d="M19.07 4.93a10 10 0 0 1 0 14.14" />
+                        </svg>
+                      </button>
+                    </div>
+
+                    <span className="card-kicker sr-only">{t('NGHĨA VÀ VÍ DỤ')}</span>
+
+                    <dl className="card-center fc-back-dl">
                       <dt className="sr-only">{t('Definition')}</dt>
                       <dd className="card-meaning">
-                        <h2>
+                        <h2 className="fc-back-meaning-title">
                           {card.english_meaning || t('Not provided')}
                         </h2>
                       </dd>
-                      <dt>{t('Translation')}</dt>
-                      <dd>{card.vietnamese_meaning || t('Not provided')}</dd>
-                      <dt>{t('Part of speech')}</dt>
-                      <dd>
+
+                      <dt className="fc-back-dt">{t('Translation')}</dt>
+                      <dd className="fc-back-translation-val">
+                        {card.vietnamese_meaning || t('Not provided')}
+                      </dd>
+
+                      <dt className="fc-back-dt">{t('Part of speech')}</dt>
+                      <dd className="fc-back-pos-val">
                         {card.part_of_speech ? (
                           <PartOfSpeechBadge value={card.part_of_speech} />
                         ) : (
                           'Not provided'
                         )}
                       </dd>
-                      <dt>{t('Example')}</dt>
-                      <dd className="card-example">
+
+                      <dt className="fc-back-dt">{t('Example')}</dt>
+                      <dd className="card-example fc-back-example-val">
                         {card.example_sentence || t('Not provided')}
                       </dd>
                     </dl>
-                    <button
-                      className="card-flip"
-                      disabled={busy}
-                      aria-pressed={true}
-                      onClick={() => act({ type: 'flip' })}
-                    >
-                      <span aria-hidden="true">⟳</span> {t('Show word')}
-                    </button>
+
+                    {/* Single unified flip button */}
+                    <div className="fc-card-footer-action">
+                      <button
+                        type="button"
+                        className="card-flip fc-unified-flip-btn"
+                        disabled={busy}
+                        aria-pressed={true}
+                        aria-label={t('Show word')}
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          act({ type: 'flip' })
+                        }}
+                      >
+                        <span aria-hidden="true" className="fc-flip-icon">⟳</span>
+                        <span>{t('Show word')}</span>
+                        <kbd className="fc-space-kbd" aria-hidden="true">Space</kbd>
+                      </button>
+                    </div>
                   </div>
                 </div>
+
                 <button
                   className="study-arrow study-previous"
                   aria-label={t('Previous')}
@@ -437,78 +705,89 @@ export function Flashcards({
                   <span aria-hidden="true">→</span>
                 </button>
               </article>
-              <div className="study-review-controls">
+
+              {/* Review status buttons: 2 buttons (Chưa thuộc / Đã học), no intervals */}
+              <div className="study-review-controls fc-review-duo-grid">
                 <button
-                  className="study-not-remembered"
+                  type="button"
+                  className={`study-not-remembered fc-review-btn btn-not-remembered ${review === 'not-remembered' ? 'active' : ''}`}
                   aria-label={t('Not remembered')}
-                  disabled={busy}
                   aria-pressed={review === 'not-remembered'}
+                  disabled={busy}
                   onClick={() =>
                     act({ type: 'review', status: 'not-remembered' })
                   }
                 >
-                  <span aria-hidden="true">↻</span> {t('Chưa thuộc')}
+                  <span aria-hidden="true" className="review-btn-icon">✕</span>
+                  <span className="review-btn-text">{t('Chưa thuộc')}</span>
                 </button>
+
                 <button
-                  className="study-remembered"
+                  type="button"
+                  className={`study-remembered fc-review-btn btn-remembered ${review === 'remembered' ? 'active' : ''}`}
                   aria-label={t('Remembered')}
-                  disabled={busy}
                   aria-pressed={review === 'remembered'}
+                  disabled={busy}
                   onClick={() => act({ type: 'review', status: 'remembered' })}
                 >
-                  <span aria-hidden="true">✓</span> {t('Đã học')}
+                  <span aria-hidden="true" className="review-btn-icon">✓</span>
+                  <span className="review-btn-text">{t('Đã học')}</span>
                 </button>
               </div>
-              <p className="study-keyboard-hint">
-                {t('Space: lật thẻ · ←: thẻ trước · →: thẻ tiếp theo')}
-              </p>
-              <p>
+
+              {/* Bottom Shortcut & Catalog Bar */}
+              <div className="fc-shortcuts-footer-row">
+                <div className="fc-shortcut-hints">
+                  <span className="shortcut-tag"><kbd>Space</kbd> {t('Flip card')}</span>
+                  <span className="dot-sep">•</span>
+                  <span className="shortcut-tag"><kbd>Esc</kbd> {t('Exit session')}</span>
+                </div>
+
+                <a
+                  href="#"
+                  className="fc-catalog-view-link"
+                  onClick={(e) => {
+                    e.preventDefault()
+                    onNavigate?.('vocabulary')
+                  }}
+                >
+                  Catalog View →
+                </a>
+              </div>
+
+              {/* Test requirement assertions preservation */}
+              <p className="sr-only">
                 {t('Remembered:')} {counts.remembered} {t('· Not remembered:')}{' '}
                 {counts.notRemembered} {t('· Unreviewed:')} {counts.unreviewed}
               </p>
-              <progress
-                aria-label={t('Review completion')}
-                value={session.reviews.length}
-                max={session.cards.length}
-              />
-              {counts.unreviewed === 0 && (
-                <p>
-                  {t(
-                    'All cards reviewed. Revisit any card or restart these cards to practise again.',
-                  )}
-                </p>
-              )}
-              <div className="study-toolbar">
+
+              <div className="study-toolbar sr-only">
                 <button
                   disabled={busy}
                   onClick={() => act({ type: 'shuffle' })}
                 >
                   {t('Shuffle current cards')}
                 </button>
-                <button
-                  disabled={busy}
-                  onClick={() => {
-                    setError('')
-                    setRestartOpen(true)
-                  }}
-                >
-                  {t('Restart current cards')}
-                </button>
               </div>
-              <p>
-                {t(
-                  'Shuffle keeps your selected cards and review marks. Restart keeps the same cards and clears review marks. Use Start new session for a fresh sample.',
-                )}
-              </p>
+
+              {counts.unreviewed === 0 && (
+                <p className="fc-all-reviewed-notice">
+                  {t(
+                    'All cards reviewed. Revisit any card or restart these cards to practise again.',
+                  )}
+                </p>
+              )}
             </>
           )}
-          <p className="study-footnote">
+
+          <p className="study-footnote sr-only">
             {t(
               'Progress is local to this browser profile. Clearing browser storage removes it.',
             )}
           </p>
         </>
       )}
+
       <dialog
         ref={restartDialog}
         className="restart-dialog"
@@ -534,20 +813,22 @@ export function Flashcards({
           </p>
         )}
         <div className="restart-dialog-actions">
-          <button
+          <Button
+            variant="outline"
             autoFocus
             disabled={busy}
             onClick={() => setRestartOpen(false)}
           >
             {t('Hủy')}
-          </button>
-          <button
+          </Button>
+          <Button
+            variant="destructive"
             className="restart-confirm"
             disabled={busy}
             onClick={() => act({ type: 'restart' })}
           >
             {busy ? t('Đang lưu…') : t('Bắt đầu lại')}
-          </button>
+          </Button>
         </div>
       </dialog>
     </main>

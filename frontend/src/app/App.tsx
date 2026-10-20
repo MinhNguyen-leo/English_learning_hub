@@ -21,6 +21,7 @@ import { useVisitStreak } from '../features/dashboard/useVisitStreak'
 import { Tutorial } from '../features/tutorial/Tutorial'
 import { LanguageSwitch } from '../features/language/LanguageSwitch'
 import { DonationQr } from '../features/donation/DonationQr'
+import { Button } from '../components/ui'
 import './app.css'
 import './academy-theme.css'
 
@@ -130,101 +131,140 @@ function LearningHub({
         ),
       )
   }
+  const [quickAddTrigger, setQuickAddTrigger] = useState(0)
+
   return (
     <div className="app-shell">
-      <header className="app-sidebar">
-        <a
-          className="app-brand"
-          href="#"
-          onClick={(event) => {
-            event.preventDefault()
-            setView('dashboard')
-          }}
-        >
-          <span className="brand-mark" aria-hidden="true">
-            <svg
-              width="25"
-              height="25"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.7"
-              strokeLinecap="round"
-              strokeLinejoin="round"
+      <header className="app-navbar" role="banner">
+        <div className="navbar-container">
+          <div className="navbar-left">
+            <a
+              className="app-brand"
+              href="#"
+              onClick={(event) => {
+                event.preventDefault()
+                setView('dashboard')
+              }}
             >
-              <path d="M12 5v15M3 4h4a7 7 0 0 1 5 2 7 7 0 0 1 5-2h4v14h-4a7 7 0 0 0-5 2 7 7 0 0 0-5-2H3Z" />
-            </svg>
-          </span>
-          <span>
-            English Hub<small>{t('YOUR LEARNING SPACE')}</small>
-          </span>
-        </a>
-        <nav className="app-navigation" aria-label={t('Learning features')}>
-          <button
-            aria-pressed={view === 'dashboard'}
-            onClick={() => setView('dashboard')}
-          >
-            <span className="nav-icon" aria-hidden="true">
-              ⌂
-            </span>
-            {t('Dashboard')}
-          </button>
-          <button
-            aria-pressed={view === 'vocabulary'}
-            onClick={() => setView('vocabulary')}
-          >
-            <span className="nav-icon" aria-hidden="true">
-              ▤
-            </span>
-            {t('Vocabulary')}
-          </button>
-          <button
-            aria-pressed={view === 'flashcards'}
-            onClick={() => {
-              setStudyOpened(true)
-              setView('flashcards')
-            }}
-          >
-            <span className="nav-icon" aria-hidden="true">
-              ▱
-            </span>
-            {t('Flashcards')}
-          </button>
-          <button
-            aria-pressed={view === 'quiz'}
-            onClick={() => {
-              setQuizOpened(true)
-              setView('quiz')
-            }}
-          >
-            <span className="nav-icon" aria-hidden="true">
-              ✓
-            </span>
-            {t('Quiz')}
-          </button>
-          <button
-            aria-pressed={view === 'data'}
-            onClick={() => {
-              setDataOpened(true)
-              setView('data')
-            }}
-          >
-            <span className="nav-icon" aria-hidden="true">
-              ⇅
-            </span>
-            {t('Data Management')}
-          </button>
-        </nav>
-        <div className="header-tools">
-          <LanguageSwitch />
-          <button
-            className="tutorial-trigger"
-            onClick={() => setTutorialOpen(true)}
-            aria-haspopup="dialog"
-          >
-            <span aria-hidden="true">▱</span>
-            {t('Tutorial')}
-          </button>
+              <span className="brand-mark" aria-hidden="true">
+                <svg
+                  width="22"
+                  height="22"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z" />
+                  <path d="M6 6h10" />
+                  <path d="M6 10h10" />
+                </svg>
+              </span>
+              <span className="brand-title">English Learning Hub</span>
+            </a>
+          </div>
+
+          <nav className="app-navigation" aria-label={t('Learning features')}>
+            <button
+              aria-pressed={view === 'dashboard'}
+              aria-label={t('Dashboard')}
+              onClick={() => setView('dashboard')}
+            >
+              {t('Progress')}
+            </button>
+            <button
+              aria-pressed={view === 'vocabulary'}
+              onClick={() => setView('vocabulary')}
+            >
+              {t('Vocabulary')}
+            </button>
+            <button
+              aria-pressed={view === 'flashcards'}
+              onClick={() => {
+                setStudyOpened(true)
+                setView('flashcards')
+              }}
+            >
+              {t('Flashcards')}
+            </button>
+            <button
+              aria-pressed={view === 'quiz'}
+              onClick={() => {
+                setQuizOpened(true)
+                setView('quiz')
+              }}
+            >
+              {t('Quiz')}
+            </button>
+            <button
+              aria-pressed={view === 'data'}
+              aria-label={t('Data Management')}
+              onClick={() => {
+                setDataOpened(true)
+                setView('data')
+              }}
+            >
+              {t('Backup & Sync')}
+            </button>
+          </nav>
+
+          <div className="navbar-actions">
+            <Button
+              className="quick-add-btn"
+              onClick={() => {
+                setView('vocabulary')
+                setQuickAddTrigger((count) => count + 1)
+              }}
+              title={t('Quick Add Word')}
+            >
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
+                <line x1="12" y1="5" x2="12" y2="19" />
+                <line x1="5" y1="12" x2="19" y2="12" />
+              </svg>
+              <span>{t('Quick Add Word')}</span>
+            </Button>
+
+            <div className="header-tools">
+              <LanguageSwitch />
+              <Button
+                variant="ghost"
+                size="sm"
+                className="tutorial-trigger"
+                onClick={() => setTutorialOpen(true)}
+                aria-haspopup="dialog"
+                aria-label={t('Tutorial')}
+                title={t('Tutorial')}
+              >
+                <svg
+                  width="15"
+                  height="15"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden="true"
+                >
+                  <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" />
+                  <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" />
+                </svg>
+                <span className="tutorial-text">{t('Tutorial')}</span>
+              </Button>
+            </div>
+          </div>
         </div>
       </header>
       {tutorialOpen && <Tutorial onClose={() => setTutorialOpen(false)} />}
@@ -331,7 +371,7 @@ function LearningHub({
           key={`vocabulary-${runtime.generation}`}
           hidden={view !== 'vocabulary'}
         >
-          <VocabularyManager repository={repository} />
+          <VocabularyManager repository={repository} addTrigger={quickAddTrigger} />
         </div>
         {studyOpened && (
           <div
@@ -341,6 +381,8 @@ function LearningHub({
             <Flashcards
               repository={repository}
               progress={progress}
+              streak={streak}
+              onNavigate={(destination) => setView(destination)}
               initialSize={runtime.settings.flashcardSize}
               onSizeChange={(size) => savePreference({ flashcardSize: size })}
             />

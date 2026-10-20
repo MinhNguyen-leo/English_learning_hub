@@ -80,6 +80,18 @@ For each task:
 6. Summarize modified files.
 7. Stop and wait for the next instruction.
 
+## Agent Skills
+
+All agent skills are installed in `.agents/skills/<skill_name>/SKILL.md` (and interoperable with Antigravity, Claude Code, Gemini, and Codex):
+
+- **Ponytail**: Minimalist senior engineering, YAGNI, diff reviews, debt tracking (`ponytail`, `ponytail-review`, `ponytail-audit`, `ponytail-debt`, `ponytail-gain`, `ponytail-help`).
+- **OmniRoute**: API gateway, routing combos, API keys, RTK token compression, provider failover, MCP server, and proxy configuration (`omni-*`, `cli-*`).
+- **Graphify**: Knowledge graph and AST parsing for exploring codebases, structural relationships, dependency tracing, and `/graphify` queries (`graphify`).
+- **Addy Osmani Agent Skills**: 25 modular production-grade engineering workflows with anti-rationalization tables (`spec-driven-development`, `test-driven-development`, `code-review-and-quality`, `performance-optimization`, `debugging-and-error-recovery`, etc.).
+- **Three.js & WebGL**: 3D scene setup, geometries, materials, lighting, cameras, animation, shaders, loaders, WebGPU, and React Three Fiber (`threejs-*`).
+- **GSAP & Motion Design**: Timelines, ScrollTrigger, UI micro-interactions, layout morphing with Flip, React context cleanup, and 60fps performance optimization (`gsap-*`).
+- **Project Custom Skills**: `frontend-development`, `database-security`, `systematic-debugging`, `testing`.
+
 ## Git Rules
 
 - Do not force push.

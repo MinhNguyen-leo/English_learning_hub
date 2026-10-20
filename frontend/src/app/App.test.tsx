@@ -45,6 +45,33 @@ it('persists study preferences and reloads all mounted learning views after a co
   const user = userEvent.setup()
   render(<App />)
   await screen.findByRole('heading', { name: 'Learning Dashboard' })
+  const navigation = screen.getByRole('navigation', {
+    name: 'Learning features',
+  })
+  expect(
+    within(navigation)
+      .getAllByRole('button')
+      .map((button) => button.textContent),
+  ).toEqual(['Progress', 'Vocabulary', 'Flashcards', 'Quiz', 'Backup & Sync'])
+  expect(screen.queryByLabelText('Guest Academic Profile')).toBeNull()
+  const brand = screen.getByRole('link', { name: 'English Learning Hub' })
+  for (const target of [
+    within(brand).getByText('English Learning Hub'),
+    brand.querySelector('svg')!,
+  ]) {
+    await user.click(
+      within(navigation).getByRole('button', { name: 'Vocabulary' }),
+    )
+    await user.click(target)
+    expect(
+      within(navigation)
+        .getByRole('button', { name: 'Dashboard' })
+        .getAttribute('aria-pressed'),
+    ).toBe('true')
+    expect(
+      screen.getByRole('heading', { name: 'Learning Dashboard' }),
+    ).toBeTruthy()
+  }
   const instagram = screen.getByRole('link', { name: /Instagram t_minleo/ })
   expect(instagram.getAttribute('href')).toBe(
     'https://www.instagram.com/t_minleo/',

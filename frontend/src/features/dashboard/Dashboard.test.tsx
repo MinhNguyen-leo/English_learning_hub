@@ -7,6 +7,25 @@ import type { DashboardRepository } from './repository'
 import type { DashboardSnapshot } from './metrics'
 
 afterEach(cleanup)
+it('places the learning banner below the streak and opens flashcards', async () => {
+  const onNavigate = vi.fn()
+  const repository: DashboardRepository = { subscribe: () => () => {} }
+  render(
+    <Dashboard
+      repository={repository}
+      streak={{ days: 3, error: '', retry: vi.fn() }}
+      onNavigate={onNavigate}
+    />,
+  )
+  const streak = screen.getByRole('region', { name: 'Visit streak' })
+  const banner = screen.getByRole('region', { name: /Small steps/ })
+  expect(streak.nextElementSibling).toBe(banner)
+  await userEvent
+    .setup()
+    .click(screen.getByRole('button', { name: 'Explore flashcards' }))
+  expect(onNavigate).toHaveBeenCalledWith('flashcards')
+})
+
 it('shows an empty state and explicitly unavailable SRS and historical statistics', async () => {
   const unsubscribe = vi.fn()
   const repository: DashboardRepository = {

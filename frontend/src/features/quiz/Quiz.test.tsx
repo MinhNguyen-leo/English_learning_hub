@@ -108,6 +108,7 @@ it('submits one answer, reveals the correct answer and prevents resubmission', a
     user = userEvent.setup()
   render(<Quiz {...deps} />)
   await start(user)
+  expect(screen.getByRole('heading', { name: 'Vocabulary Quiz' })).toBeTruthy()
   expect(screen.getAllByRole('radio')).toHaveLength(4)
   expect(screen.queryByRole('button', { name: 'Submit answer' })).toBeNull()
   expect(screen.getByRole('button', { name: 'Next question' })).toHaveProperty(
@@ -133,7 +134,7 @@ it('submits one answer, reveals the correct answer and prevents resubmission', a
       ),
   ).toBe(true)
   expect(screen.queryByRole('button', { name: 'Submit answer' })).toBeNull()
-  expect(screen.getByText(/Missed so far: 1/)).toBeTruthy()
+  expect(screen.queryByText(/Missed so far:/)).toBeNull()
   await user.click(screen.getByRole('button', { name: 'Next question' }))
   expect(await screen.findByText(/Question 2 of 4/)).toBeTruthy()
   await user.click(screen.getByRole('button', { name: 'Previous question' }))

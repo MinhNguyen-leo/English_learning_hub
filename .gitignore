@@ -29,3 +29,8 @@ venv/
 .mypy_cache/
 .ruff_cache/
 .vercel/
+
+# Agent local junctions and caches
+.claude/
+.codex/
+.gemini/

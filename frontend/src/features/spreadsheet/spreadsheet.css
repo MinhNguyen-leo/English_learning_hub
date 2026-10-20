@@ -17,8 +17,63 @@
 .spreadsheet-panel p {
   margin: 12px 0;
 }
-.spreadsheet-panel .toolbar {
-  margin-top: 16px;
+.spreadsheet-panel .excel-tools-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: stretch;
+  gap: 10px;
+  margin: 20px 0;
+}
+.spreadsheet-panel button {
+  min-height: 44px;
+  padding: 10px 14px;
+  border: 1px solid #3c506c;
+  border-radius: 9px;
+  background: #17263f;
+  color: #e2e8f0;
+  font: inherit;
+  font-size: 13px;
+  line-height: 1.5;
+  cursor: pointer;
+}
+.spreadsheet-panel button:hover:not(:disabled) {
+  background: #243d60;
+}
+.spreadsheet-panel button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.spreadsheet-panel .excel-tools-actions button {
+  flex: 1 1 170px;
+  white-space: normal;
+  height: auto;
+}
+.spreadsheet-panel fieldset {
+  min-width: 0;
+  padding: 0;
+  border: 0;
+}
+.spreadsheet-panel {
+  min-width: 0;
+}
+.spreadsheet-panel .table-scroll {
+  max-width: 100%;
+  overflow-x: auto;
+}
+.spreadsheet-panel .upload-label {
+  padding: 16px;
+  border: 1px dashed #466384;
+  border-radius: 12px;
+  background: #0f1b2f;
+  color: #cbd5e1;
+}
+.spreadsheet-panel input[type='file']::file-selector-button {
+  margin-right: 12px;
+  padding: 8px 12px;
+  border: 1px solid #375678;
+  border-radius: 6px;
+  background: #1e3553;
+  color: #e2e8f0;
 }
 .column-mapping {
   display: grid;
@@ -99,6 +154,40 @@
 }
 .excel-template-preview .table-scroll {
   max-width: 100%;
+  margin-top: 16px;
+  border: 1px solid #334155;
+  overflow-x: auto;
+}
+.excel-template-preview table {
+  width: 100%;
+  min-width: 1300px;
+  border-collapse: collapse;
+}
+.app-shell .vocabulary-manager .excel-template-preview :is(th, td) {
+  padding: 14px;
+  border: 1px solid #334155;
+  text-align: left;
+  vertical-align: top;
+  min-width: 150px;
+  font-size: 12px;
+  line-height: 1.7;
+}
+.app-shell .vocabulary-manager .excel-template-preview thead th {
+  background: #123b32;
+  color: #a7f3d0;
+}
+.app-shell .vocabulary-manager .excel-template-preview tbody th {
+  background: #14263a;
+  color: #94a3b8;
+  min-width: 48px;
+}
+.template-column-guide > div {
+  padding: 10px;
+  border: 1px solid #334155;
+  border-radius: 8px;
+}
+.template-column-guide dd {
+  margin: 6px 0 0;
 }
 .excel-template-preview th {
   font-family: ui-monospace, monospace;

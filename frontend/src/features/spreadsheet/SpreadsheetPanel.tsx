@@ -1,5 +1,5 @@
 import { useUiText } from '../../lib/useUiText'
-import { useState } from 'react'
+import { useImperativeHandle, useState, type Ref } from 'react'
 import {
   duplicateKey,
   fieldNames,
@@ -29,14 +29,19 @@ interface Preview {
   snapshot: Vocabulary[]
 }
 const PAGE_SIZE = 50
+export interface SpreadsheetPanelHandle {
+  close: () => void
+}
 export default function SpreadsheetPanel({
   repository,
   onClose,
   onImported,
+  ref,
 }: {
   repository: VocabularyRepository
   onClose: () => void
   onImported: (rows: Vocabulary[]) => void
+  ref?: Ref<SpreadsheetPanelHandle>
 }) {
   const t = useUiText()
 
@@ -115,6 +120,7 @@ export default function SpreadsheetPanel({
         ).length
       : 0
   function close() {
+    if (busy) return
     if (
       sheet &&
       !window.confirm(
@@ -126,8 +132,13 @@ export default function SpreadsheetPanel({
       return
     onClose()
   }
+  useImperativeHandle(ref, () => ({ close }))
   return (
-    <section className="spreadsheet-panel" aria-labelledby="excel-heading">
+    <section
+      id="vocabulary-excel-tools"
+      className="spreadsheet-panel"
+      aria-labelledby="excel-heading"
+    >
       <h2 id="excel-heading">{t('Excel import and export')}</h2>
       <p className="import-row-limit">
         <strong>
@@ -148,7 +159,7 @@ export default function SpreadsheetPanel({
         )}
       </p>
       <fieldset disabled={busy}>
-        <div className="toolbar">
+        <div className="excel-tools-actions">
           <button
             aria-expanded={templateOpen}
             aria-controls="excel-template-preview"

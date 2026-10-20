@@ -1,6 +1,7 @@
 import { useUiText } from '../../lib/useUiText'
 import { useId, useLayoutEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
+import './part-of-speech.css'
 
 const options = [
   'Noun',
@@ -177,6 +178,9 @@ export function PartOfSpeechPicker({
         }}
       />
       {!open && value && <PartOfSpeechBadge value={value} />}
+      <span className="pos-picker-chevron" aria-hidden="true">
+        ⌄
+      </span>
       {open &&
         !disabled &&
         createPortal(

@@ -1,266 +1,718 @@
-﻿.vocabulary-manager {
-  max-width: 1600px;
-  margin: auto;
-  padding: 40px 24px;
+/* Lexicon Hub Dark Theme - Vocabulary Manager */
+.lexicon-vocab-dark {
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 32px 24px 64px;
+  color: #f1f5f9;
 }
-.vocabulary-manager header {
-  max-width: 760px;
-  margin-bottom: 28px;
-}
-.vocabulary-manager h1 {
-  font-size: 2.5rem;
-  font-weight: 700;
-  letter-spacing: -0.04em;
-  margin: 8px 0 12px;
-}
-.eyebrow {
-  color: var(--primary);
-  font-weight: 700;
-  font-size: 0.75rem;
-  letter-spacing: 0.12em;
-}
-.storage-note {
-  color: var(--text-muted);
-  font-size: 0.875rem;
-  margin-top: 12px;
-}
-.toolbar {
+
+.vocab-header-container {
   display: flex;
-  align-items: end;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 24px;
+  gap: 20px;
   flex-wrap: wrap;
-  gap: 12px;
-  margin-bottom: 16px;
 }
-.toolbar label {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  font-size: 0.875rem;
-  font-weight: 600;
-}
-.vocabulary-manager input,
-.vocabulary-manager select,
-.vocabulary-manager textarea,
-.vocabulary-manager button {
-  border: 1px solid var(--control-border);
-  border-radius: 6px;
-  background: var(--surface);
-  padding: 8px 12px;
-  color: var(--text);
-  font: inherit;
-}
-.vocabulary-manager button {
-  cursor: pointer;
-  font-weight: 600;
-}
-.toolbar > button:first-of-type {
-  background: var(--primary);
-  border-color: var(--primary);
-  color: white;
-}
-.vocabulary-manager button:disabled {
-  opacity: 0.5;
-  cursor: default;
-}
-.vocabulary-manager :focus-visible {
-  outline: 3px solid var(--focus);
-  outline-offset: 2px;
-}
-.table-scroll {
-  overflow-x: auto;
-  margin-top: 16px;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  background: var(--surface);
-}
-.vocabulary-manager table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 0.875rem;
-}
-.table-top-scroll {
-  height: 22px;
-  overflow-x: scroll;
-  overflow-y: hidden;
-  margin-top: 16px;
-  border: 1px solid var(--control-border);
-  border-radius: 6px;
-  background: var(--surface);
-  scrollbar-color: var(--primary-dark) var(--surface);
-}
-.table-top-scroll > div {
-  height: 1px;
-}
-.table-top-scroll + .table-scroll {
-  margin-top: 4px;
-}
-.vocabulary-manager th {
-  background: var(--surface-tint);
-  text-align: left;
-  font-weight: 600;
-  white-space: nowrap;
-}
-.vocabulary-manager th,
-.vocabulary-manager td {
-  padding: 12px;
-  border-bottom: 1px solid var(--surface-tint);
-  border-right: 1px solid var(--surface-tint);
-  min-width: 160px;
-  vertical-align: top;
-}
-.vocabulary-manager td {
-  white-space: pre-wrap;
-  overflow-wrap: anywhere;
-  max-width: 350px;
-}
-.vocabulary-manager textarea {
-  min-width: 190px;
-  width: 100%;
-  resize: vertical;
-}
-.vocabulary-manager td.editable-cell {
-  padding: 0;
-}
-.vocabulary-manager :is(th, td):nth-child(2) {
-  width: 420px;
-  min-width: 360px;
-  max-width: 560px;
-}
-.vocabulary-manager td:nth-child(2) textarea {
-  min-width: 320px;
-}
-.vocabulary-manager :is(th, td):nth-child(4) {
-  width: 148px;
-  min-width: 132px;
-  max-width: 170px;
-  padding-inline: 8px;
-}
-.vocabulary-manager td:nth-child(4) .pos-picker {
-  min-width: 132px;
-}
-.vocabulary-manager .cell-value {
-  display: block;
-  width: 100%;
-  min-height: 48px;
-  border: 0;
-  border-radius: 0;
-  padding: 12px;
-  text-align: left;
-  font-weight: inherit;
-  white-space: pre-wrap;
-  overflow-wrap: anywhere;
-  cursor: text;
-}
-.vocabulary-manager .cell-value:hover {
-  background: var(--surface-hover);
-}
-.actions button {
-  display: block;
-  margin-bottom: 8px;
-}
-.error,
-.field-error {
-  color: var(--error-text);
-}
-.error {
-  padding: 12px;
-  background: var(--error-bg);
-  border: 1px solid var(--border);
-  border-radius: 6px;
-}
-.field-error {
-  display: block;
-  margin-top: 6px;
-}
-.draft-note {
-  color: #854d0e;
-  margin-top: 8px;
-}
-.empty {
-  padding: 32px 12px;
-  text-align: center;
-  color: var(--text-muted);
-}
-.pos-picker {
-  min-width: 200px;
-}
-.pos-picker input {
-  width: 100%;
-}
-.pos-badge {
-  display: inline-block;
-  border-radius: 999px;
-  padding: 3px 9px;
-  font-size: 0.875rem;
-  line-height: 1.4;
-}
-.pos-picker > .pos-badge {
-  margin-top: 8px;
-}
-.pos-noun {
-  background: #f2cedc;
-  color: #79213f;
-}
-.pos-verb {
-  background: #f9d3cb;
-  color: #853729;
-}
-.pos-adjective {
-  background: #f6c0c8;
-  color: #822239;
-}
-.pos-adverb {
-  background: #f8dfc3;
-  color: #794019;
-}
-.pos-pronoun {
-  background: #ffe8b8;
-  color: #634817;
-}
-.pos-preposition {
-  background: #ffd1b7;
-  color: #77400d;
-}
-.pos-conjunction {
-  background: #7d2546;
-  color: white;
-}
-.pos-interjection {
-  background: #8b3435;
-  color: white;
-}
-.pos-other {
-  background: #eadadd;
-  color: #63464d;
-}
-.pos-menu {
-  z-index: 100;
-  overflow-y: auto;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 6px;
-  background: var(--surface);
-  box-shadow: 0 8px 24px #641b3126;
-  font-family: system-ui, sans-serif;
-}
-.pos-option {
+
+.vocab-title-row {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 6px 8px;
-  min-height: 36px;
+  gap: 12px;
+  margin: 6px 0 0;
+}
+
+.vocab-page-title {
+  font-size: 2rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  color: #ffffff;
+  margin: 0;
+}
+
+.vocab-count-badge {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #94a3b8;
+  background: rgba(30, 41, 59, 0.7);
+  border: 1px solid rgba(51, 65, 85, 0.6);
+  padding: 4px 10px;
+  border-radius: 9999px;
+}
+
+.vocab-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.lexicon-ghost-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(15, 23, 42, 0.8);
+  border: 1px solid rgba(51, 65, 85, 0.8);
+  color: #cbd5e1;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  padding: 8px 14px;
+  border-radius: 8px;
   cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.lexicon-ghost-btn:hover:not(:disabled) {
+  background: rgba(30, 41, 59, 0.9);
+  color: #ffffff;
+  border-color: rgba(100, 116, 139, 0.8);
+}
+
+.lexicon-ghost-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.lexicon-primary-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #2563eb;
+  border: 1px solid #3b82f6;
+  color: #ffffff;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  padding: 8px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.35);
+  transition: all 0.15s ease;
+}
+
+.lexicon-primary-btn:hover:not(:disabled) {
+  background: #1d4ed8;
+  border-color: #60a5fa;
+  transform: translateY(-1px);
+}
+
+.lexicon-primary-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.vocab-fieldset {
+  border: none;
+  padding: 0;
+  margin: 0;
+}
+
+/* Filter Bar */
+.vocab-filter-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.vocab-search-box {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(15, 23, 42, 0.8);
+  border: 1px solid rgba(51, 65, 85, 0.8);
+  padding: 8px 14px;
+  border-radius: 10px;
+  flex: 1;
+  min-width: 260px;
+  max-width: 480px;
+  color: #94a3b8;
+}
+
+.vocab-search-box input {
+  background: transparent;
+  border: none;
+  color: #ffffff;
+  font-size: 0.875rem;
+  width: 100%;
+  outline: none;
+}
+
+.vocab-search-box input::placeholder {
+  color: #64748b;
+}
+
+.vocab-kbd {
+  font-size: 0.6875rem;
+  font-family: inherit;
+  font-weight: 700;
+  color: #64748b;
+  background: rgba(30, 41, 59, 0.8);
+  border: 1px solid rgba(51, 65, 85, 0.8);
+  padding: 2px 6px;
   border-radius: 4px;
 }
-.pos-active {
-  background: var(--surface-hover);
+
+.vocab-dropdowns-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
 }
-@media (max-width: 600px) {
-  .vocabulary-manager {
-    padding: 24px 12px;
+
+.filter-select-wrapper {
+  display: flex;
+  align-items: center;
+  background: rgba(15, 23, 42, 0.8);
+  border: 1px solid rgba(51, 65, 85, 0.8);
+  padding: 6px 10px;
+  border-radius: 8px;
+}
+
+.filter-label-prefix {
+  font-size: 0.8125rem;
+  color: #64748b;
+  margin-right: 6px;
+  font-weight: 500;
+}
+
+.filter-select-wrapper select {
+  background: transparent;
+  border: none;
+  color: #cbd5e1;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  outline: none;
+  cursor: pointer;
+}
+
+.filter-select-wrapper select option {
+  background: #0f172a;
+  color: #f1f5f9;
+}
+
+.refresh-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background: rgba(15, 23, 42, 0.8);
+  border: 1px solid rgba(51, 65, 85, 0.8);
+  color: #94a3b8;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.refresh-icon-btn:hover:not(:disabled) {
+  color: #ffffff;
+  border-color: rgba(100, 116, 139, 0.8);
+  background: rgba(30, 41, 59, 0.9);
+}
+
+.refresh-icon-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Batch Action Bar */
+.batch-action-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #1e3a8a;
+  border: 1px solid #3b82f6;
+  border-radius: 10px;
+  padding: 10px 16px;
+  margin-bottom: 16px;
+  animation: fadeIn 0.2s ease-out;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.batch-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.batch-count-badge {
+  background: #2563eb;
+  color: #ffffff;
+  font-weight: 700;
+  font-size: 0.8125rem;
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+}
+
+.batch-text {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #ffffff;
+}
+
+.batch-sub {
+  color: #93c5fd;
+  font-size: 0.8125rem;
+  font-weight: 400;
+}
+
+.batch-right-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.batch-pill-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #ffffff;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  padding: 5px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.batch-pill-btn:hover {
+  background: rgba(255, 255, 255, 0.22);
+}
+
+.batch-pill-btn.delete {
+  background: #b91c1c;
+  border-color: #ef4444;
+}
+
+.batch-pill-btn.delete:hover {
+  background: #dc2626;
+}
+
+/* Master Table */
+.lexicon-master-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  background: rgba(13, 21, 39, 0.8);
+  border: 1px solid rgba(30, 41, 59, 0.9);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.lexicon-master-table th {
+  background: rgba(15, 23, 42, 0.95);
+  color: #94a3b8;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  padding: 12px 14px;
+  border-bottom: 1px solid rgba(30, 41, 59, 0.9);
+  text-align: left;
+  white-space: nowrap;
+}
+
+.lexicon-master-table td {
+  padding: 12px 14px;
+  border-bottom: 1px solid rgba(30, 41, 59, 0.6);
+  font-size: 0.875rem;
+  color: #cbd5e1;
+  vertical-align: middle;
+  background: transparent;
+  transition: background 0.15s ease;
+}
+
+.lexicon-master-table.compact th,
+.lexicon-master-table.compact td {
+  padding: 8px 10px;
+  font-size: 0.8125rem;
+}
+
+.lexicon-master-table tbody tr:hover td {
+  background: rgba(30, 41, 59, 0.4);
+}
+
+.lexicon-master-table tbody tr.row-selected td {
+  background: rgba(37, 99, 235, 0.12);
+}
+
+.th-checkbox,
+.td-checkbox {
+  width: 38px;
+  text-align: center;
+}
+
+.th-actions {
+  text-align: right;
+  width: 80px;
+}
+
+/* Word Cell */
+.word-cell-content {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.word-primary-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.word-text {
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.speaker-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #3b82f6;
+  cursor: pointer;
+  padding: 2px;
+  border-radius: 4px;
+  transition: all 0.15s ease;
+}
+
+.speaker-icon-btn:hover {
+  color: #60a5fa;
+  background: rgba(59, 130, 246, 0.15);
+}
+
+.phonetic-text {
+  font-size: 0.75rem;
+  color: #60a5fa;
+  font-family: monospace;
+}
+
+.academic-quote {
+  font-style: italic;
+  color: #cbd5e1;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.synonym-tag {
+  display: inline-block;
+  background: rgba(30, 41, 59, 0.8);
+  border: 1px solid rgba(51, 65, 85, 0.8);
+  color: #94a3b8;
+  font-size: 0.6875rem;
+  font-weight: 500;
+  padding: 2px 6px;
+  border-radius: 4px;
+  margin-right: 4px;
+  margin-bottom: 2px;
+}
+
+.tags-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.empty-dash {
+  color: #475569;
+}
+
+.cell-plain-text {
+  color: #cbd5e1;
+}
+
+/* Editable cell button */
+.lexicon-master-table td.editable-cell {
+  padding: 0;
+}
+
+.lexicon-master-table .cell-value {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-height: 48px;
+  border: none;
+  background: transparent;
+  padding: 12px 14px;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.lexicon-master-table.compact .cell-value {
+  padding: 8px 10px;
+  min-height: 38px;
+}
+
+.lexicon-master-table textarea {
+  width: 100%;
+  background: #0f172a;
+  border: 1px solid #3b82f6;
+  border-radius: 6px;
+  color: #ffffff;
+  padding: 8px;
+  font: inherit;
+  font-size: 0.8125rem;
+  resize: vertical;
+}
+
+.btn-delete-row {
+  background: transparent;
+  border: none;
+  color: #64748b;
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+}
+
+.btn-delete-row:hover:not(:disabled) {
+  color: #ef4444;
+  background: rgba(239, 68, 68, 0.12);
+}
+
+.table-row-actions {
+  display: flex;
+  gap: 6px;
+  justify-content: flex-end;
+}
+
+.btn-save-row {
+  background: #2563eb;
+  border: 1px solid #3b82f6;
+  color: #ffffff;
+  padding: 5px 10px;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btn-cancel-row {
+  background: rgba(30, 41, 59, 0.8);
+  border: 1px solid rgba(51, 65, 85, 0.8);
+  color: #cbd5e1;
+  padding: 5px 10px;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  cursor: pointer;
+}
+
+.draft-alert-banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(37, 99, 235, 0.15);
+  border: 1px solid rgba(59, 130, 246, 0.4);
+  color: #93c5fd;
+  padding: 8px 14px;
+  border-radius: 8px;
+  font-size: 0.8125rem;
+  margin-bottom: 12px;
+}
+
+.pulse-indicator {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #3b82f6;
+  box-shadow: 0 0 8px #3b82f6;
+}
+
+.error-banner {
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  color: #fca5a5;
+  padding: 8px 14px;
+  border-radius: 8px;
+  font-size: 0.8125rem;
+  margin-bottom: 12px;
+}
+
+.status-indicator {
+  color: #64748b;
+  font-size: 0.8125rem;
+  margin: 6px 0 12px;
+}
+
+/* Table Bottom Bar */
+.vocab-view-select {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #94a3b8;
+  font-size: 12px;
+}
+.vocab-view-select select {
+  padding: 8px 10px;
+  border: 1px solid #334155;
+  border-radius: 8px;
+  background: #0f172a;
+  color: #e2e8f0;
+}
+.vocab-pagination {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.vocab-pagination > span {
+  padding-inline: 6px;
+  white-space: nowrap;
+}
+.vocabulary-manager .table-controls-right {
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.table-bottom-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 14px;
+  padding: 4px 0;
+  color: #64748b;
+  font-size: 0.8125rem;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.table-status-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.idb-sync-state {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: #10b981;
+}
+
+.table-controls-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.density-toggle {
+  display: flex;
+  background: rgba(15, 23, 42, 0.8);
+  border: 1px solid rgba(51, 65, 85, 0.8);
+  border-radius: 6px;
+  padding: 2px;
+}
+
+.density-btn {
+  background: transparent;
+  border: none;
+  color: #64748b;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 4px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.density-btn.active {
+  background: rgba(51, 65, 85, 0.8);
+  color: #ffffff;
+}
+
+.dot-sep {
+  color: #334155;
+}
+
+/* Bottom 4 Summary Cards */
+.vocab-bottom-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-top: 36px;
+}
+
+.vocab-summary-card {
+  background: rgba(13, 21, 39, 0.7);
+  border: 1px solid rgba(30, 41, 59, 0.8);
+  border-radius: 12px;
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.card-icon-wrapper {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.card-icon-wrapper.blue {
+  background: rgba(37, 99, 235, 0.15);
+  color: #3b82f6;
+  border: 1px solid rgba(37, 99, 235, 0.3);
+}
+
+.card-icon-wrapper.teal {
+  background: rgba(16, 185, 129, 0.15);
+  color: #10b981;
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.card-icon-wrapper.amber {
+  background: rgba(245, 158, 11, 0.15);
+  color: #f59e0b;
+  border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.card-icon-wrapper.purple {
+  background: rgba(147, 51, 234, 0.15);
+  color: #a855f7;
+  border: 1px solid rgba(147, 51, 234, 0.3);
+}
+
+.summary-title {
+  display: block;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  color: #64748b;
+  margin-bottom: 2px;
+}
+
+.summary-value {
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: #ffffff;
+}
+
+@media (max-width: 900px) {
+  .vocab-bottom-summary-grid {
+    grid-template-columns: repeat(2, 1fr);
   }
-  .toolbar label,
-  .toolbar input {
-    width: 100%;
+}
+
+@media (max-width: 600px) {
+  .vocab-bottom-summary-grid {
+    grid-template-columns: 1fr;
   }
 }

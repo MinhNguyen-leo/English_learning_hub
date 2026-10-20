@@ -1,5 +1,11 @@
 // @vitest-environment jsdom
-import { cleanup, render, screen, waitFor } from '@testing-library/react'
+import {
+  cleanup,
+  render,
+  screen,
+  waitFor,
+  within,
+} from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, expect, it, vi } from 'vitest'
 import { VocabularyManager } from './VocabularyManager'
@@ -18,6 +24,71 @@ function repository(): VocabularyRepository {
     importEntries: vi.fn(),
   }
 }
+it('paginates filtered words, changes page sizes and supports a continuous list', async () => {
+  const repo = repository()
+  vi.mocked(repo.list).mockResolvedValue(
+    Array.from({ length: 61 }, (_, index) => ({
+      ...emptyInput,
+      id: String(index),
+      word: `word${String(index).padStart(3, '0')}`,
+      english_meaning: 'definition',
+      created_at: '2026-01-01T00:00:00.000Z',
+      updated_at: '2026-01-01T00:00:00.000Z',
+    })),
+  )
+  const user = userEvent.setup()
+  render(<VocabularyManager repository={repo} />)
+  await screen.findByRole('button', { name: 'Word for word000' })
+  const table = screen.getByRole('table')
+  const count = () => within(table).getAllByRole('row').length - 1
+  expect(count()).toBe(20)
+  expect(screen.getByRole('button', { name: 'Previous page' })).toHaveProperty(
+    'disabled',
+    true,
+  )
+  await user.click(screen.getByRole('button', { name: 'Next page' }))
+  expect(screen.getByRole('button', { name: 'Word for word020' })).toBeTruthy()
+  await user.click(screen.getByRole('button', { name: 'Last page' }))
+  expect(count()).toBe(1)
+  expect(screen.getByRole('button', { name: 'Next page' })).toHaveProperty(
+    'disabled',
+    true,
+  )
+  await user.type(screen.getByRole('searchbox', { name: 'Search' }), 'word060')
+  expect(screen.getByText('Showing 1–1 of 1 words')).toBeTruthy()
+  await user.clear(screen.getByRole('searchbox', { name: 'Search' }))
+  for (const size of [40, 60, 100]) {
+    await user.selectOptions(
+      screen.getByRole('combobox', { name: 'Words per page' }),
+      String(size),
+    )
+    expect(count()).toBe(Math.min(size, 61))
+  }
+  await user.selectOptions(
+    screen.getByRole('combobox', { name: 'Table view' }),
+    'all',
+  )
+  expect(count()).toBe(61)
+  expect(
+    screen.queryByRole('navigation', { name: 'Vocabulary pages' }),
+  ).toBeNull()
+  expect(screen.queryByText(/Stored in IndexedDB/)).toBeNull()
+}, 20000)
+
+it('toggles the combined Excel tools button open and closed', async () => {
+  const user = userEvent.setup()
+  render(<VocabularyManager repository={repository()} />)
+  const toggle = screen.getByRole('button', { name: 'Import / Export XLSX' })
+  await waitFor(() => expect(toggle).toHaveProperty('disabled', false))
+  await user.click(toggle)
+  await screen.findByRole('heading', { name: 'Excel import and export' })
+  expect(toggle.getAttribute('aria-expanded')).toBe('true')
+  await user.click(toggle)
+  expect(
+    screen.queryByRole('heading', { name: 'Excel import and export' }),
+  ).toBeNull()
+  expect(toggle.getAttribute('aria-expanded')).toBe('false')
+})
 it.each(['add', 'edit'] as const)(
   'selects a part of speech and saves with Shift+Enter during %s',
   async (mode) => {

@@ -96,9 +96,7 @@
   padding: 0 26px 16px;
   overscroll-behavior: contain;
 }
-.tutorial-page {
-  animation: tutorial-enter 200ms ease-out;
-}
+
 .tutorial-number {
   display: block;
   color: #78b59b;
@@ -264,16 +262,16 @@
   outline: 2px solid var(--focus);
   outline-offset: 3px;
 }
-@keyframes tutorial-enter {
-  from {
-    opacity: 0;
-    transform: translateY(8px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+
+.tutorial-card-leaving {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  width: 100%;
+  pointer-events: none;
+  transform-origin: 50% 85%;
 }
+
 @media (max-width: 900px) {
   .tutorial-dialog {
     width: min(540px, calc(100vw - 32px));

@@ -1,6 +1,7 @@
 import { useUiText } from '../../lib/useUiText'
 import { fieldNames, fields } from '../vocabulary/model'
 import { templateExamples } from './template'
+import '../vocabulary/part-of-speech.css'
 
 export function ExcelTemplatePreview() {
   const t = useUiText()
@@ -54,7 +55,15 @@ export function ExcelTemplatePreview() {
               <tr key={row.word}>
                 <th scope="row">{index + 2}</th>
                 {fieldNames.map((key) => (
-                  <td key={key}>{row[key]}</td>
+                  <td key={key}>
+                    {key === 'part_of_speech' ? (
+                      <span className={`pos-badge pos-${row[key]}`}>
+                        {row[key]}
+                      </span>
+                    ) : (
+                      row[key] || '—'
+                    )}
+                  </td>
                 ))}
               </tr>
             ))}

@@ -19,18 +19,93 @@ export function Tutorial({ onClose }: { onClose: () => void }) {
   const t = useUiText()
 
   const dialog = useRef<HTMLDialogElement>(null)
+  const card = useRef<HTMLElement>(null)
+  const transition = useRef<{
+    outgoing: HTMLElement
+    exit: Animation
+    enter: Animation
+  } | null>(null)
   const [step, setStep] = useState(0)
   const content = useRef<HTMLDivElement>(null)
+
+  function clearTransition() {
+    const current = transition.current
+    transition.current = null
+    current?.exit.cancel()
+    current?.enter.cancel()
+    current?.outgoing.remove()
+  }
+
+  function changeStep(newStep: number) {
+    if (newStep === step || newStep < 0 || newStep >= titles.length) return
+    clearTransition()
+    const element = card.current
+    if (
+      element?.animate &&
+      !window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+    ) {
+      // Keep an inert visual snapshot while React updates the active card.
+      const outgoing = element.cloneNode(true) as HTMLElement
+      outgoing.classList.add('tutorial-card-leaving')
+      outgoing.setAttribute('aria-hidden', 'true')
+      outgoing.inert = true
+      outgoing
+        .querySelectorAll('[id]')
+        .forEach((node) => node.removeAttribute('id'))
+      element.parentElement?.append(outgoing)
+      const outgoingContent = outgoing.querySelector('.tutorial-content')
+      if (outgoingContent)
+        outgoingContent.scrollTop = content.current?.scrollTop ?? 0
+      const sign = newStep > step ? 1 : -1
+      const timing = {
+        duration: 460,
+        easing: 'cubic-bezier(0.22, 0.7, 0.2, 1)',
+        fill: 'both' as const,
+      }
+      const exit = outgoing.animate(
+        [
+          { transform: 'translateX(0) rotate(0deg)', opacity: 1 },
+          {
+            transform: `translateX(${sign * 110}%) translateY(-24px) rotate(${sign * 14}deg)`,
+            opacity: 0,
+          },
+        ],
+        timing,
+      )
+      const enter = element.animate(
+        [
+          {
+            transform: `translateY(28px) scale(0.94) rotate(${-sign * 3}deg)`,
+            opacity: 0.6,
+          },
+          { transform: 'translateY(0) scale(1) rotate(0deg)', opacity: 1 },
+        ],
+        timing,
+      )
+      const current = { outgoing, exit, enter }
+      transition.current = current
+      void Promise.all([exit.finished, enter.finished]).then(
+        () => {
+          if (transition.current === current) clearTransition()
+        },
+        () => {
+          if (transition.current === current) clearTransition()
+        },
+      )
+    }
+    setStep(newStep)
+  }
 
   useEffect(() => {
     const element = dialog.current
     const previousFocus = document.activeElement
     const previousOverflow = document.body.style.overflow
-    document.body.style.overflow = 'hidden'
+    document.body.style.setProperty('overflow', 'hidden')
     element?.showModal()
     return () => {
+      clearTransition()
       element?.close()
-      document.body.style.overflow = previousOverflow
+      document.body.style.setProperty('overflow', previousOverflow)
       if (previousFocus instanceof HTMLElement && previousFocus.isConnected)
         previousFocus.focus()
     }
@@ -55,7 +130,7 @@ export function Tutorial({ onClose }: { onClose: () => void }) {
       }}
     >
       <div className="tutorial-stack">
-        <article className="tutorial-card">
+        <article className="tutorial-card" ref={card}>
           <header className="tutorial-header">
             <span>{t('ENGLISH HUB / TUTORIAL')}</span>
             <button
@@ -239,7 +314,7 @@ export function Tutorial({ onClose }: { onClose: () => void }) {
                   key={title}
                   aria-label={t('Đến thẻ {{value0}}', { value0: index + 1 })}
                   aria-current={step === index ? 'step' : undefined}
-                  onClick={() => setStep(index)}
+                  onClick={() => changeStep(index)}
                 />
               ))}
               <span>
@@ -250,7 +325,7 @@ export function Tutorial({ onClose }: { onClose: () => void }) {
               <button
                 type="button"
                 disabled={step === 0}
-                onClick={() => setStep(step - 1)}
+                onClick={() => changeStep(step - 1)}
               >
                 {t('Quay lại')}
               </button>
@@ -258,7 +333,7 @@ export function Tutorial({ onClose }: { onClose: () => void }) {
                 type="button"
                 className="tutorial-next"
                 onClick={() =>
-                  step === titles.length - 1 ? onClose() : setStep(step + 1)
+                  step === titles.length - 1 ? onClose() : changeStep(step + 1)
                 }
               >
                 {step === titles.length - 1

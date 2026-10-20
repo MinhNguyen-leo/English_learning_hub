@@ -1,0 +1,111 @@
+.pos-badge {
+  --pos-color: #cbd5e1;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 4px 10px;
+  border: 1px solid color-mix(in srgb, var(--pos-color) 35%, transparent);
+  border-radius: 7px;
+  background: color-mix(in srgb, var(--pos-color) 12%, transparent);
+  color: var(--pos-color);
+  font-size: 12px;
+  font-weight: 650;
+  line-height: 1.5;
+  white-space: nowrap;
+}
+.pos-badge::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+.pos-noun {
+  --pos-color: #93c5fd;
+}
+.pos-verb {
+  --pos-color: #6ee7b7;
+}
+.pos-adjective {
+  --pos-color: #c4b5fd;
+}
+.pos-adverb {
+  --pos-color: #fcd34d;
+}
+.pos-pronoun {
+  --pos-color: #f9a8d4;
+}
+.pos-preposition {
+  --pos-color: #67e8f9;
+}
+.pos-conjunction {
+  --pos-color: #fdba74;
+}
+.pos-interjection {
+  --pos-color: #fca5a5;
+}
+.pos-other {
+  --pos-color: #cbd5e1;
+}
+.pos-picker {
+  position: relative;
+  display: grid;
+  gap: 8px;
+  min-width: 175px;
+}
+.pos-picker input {
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 30px 10px 12px;
+  border: 1px solid #475569;
+  border-radius: 9px;
+  background: #0f172a;
+  color: #f1f5f9;
+  font: inherit;
+  font-size: 13px;
+}
+.pos-picker > .pos-badge {
+  justify-self: start;
+}
+.pos-picker-chevron {
+  position: absolute;
+  top: 10px;
+  right: 12px;
+  color: #94a3b8;
+  pointer-events: none;
+}
+.pos-menu {
+  z-index: 1000;
+  overflow-y: auto;
+  padding: 6px;
+  border: 1px solid #475569;
+  border-radius: 12px;
+  background: #101b30;
+  color: #e2e8f0;
+  box-shadow: 0 16px 40px #0008;
+  overscroll-behavior: contain;
+}
+.pos-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 44px;
+  padding: 8px;
+  border-radius: 7px;
+  cursor: pointer;
+}
+.pos-option.pos-active {
+  background: #263650;
+}
+.pos-option[aria-selected='true'] {
+  box-shadow: inset 3px 0 #60a5fa;
+}
+.pos-option:last-child {
+  border-top: 1px solid #334155;
+  color: #94a3b8;
+}
+.pos-picker input:focus-visible {
+  outline: 2px solid #60a5fa;
+  outline-offset: 2px;
+}

@@ -24,7 +24,7 @@
   ) {
   width: 100%;
   max-width: 1440px;
-  padding: 36px 28px 64px;
+  padding: 32px 28px 56px;
   min-height: 65svh;
 }
 .app-shell :is(.flashcards, .quiz-page, .data-management) {
@@ -65,15 +65,15 @@
 .app-shell
   main
   :is(button, input:not([type='checkbox'], [type='radio']), select) {
-  min-height: 44px;
+  min-height: 46px;
 }
 .app-shell main button {
   transition:
-    background-color 150ms,
-    border-color 150ms,
-    box-shadow 150ms,
-    transform 150ms;
-  box-shadow: inset 0 1px #ffffff06;
+    background-color 160ms,
+    border-color 160ms,
+    box-shadow 160ms,
+    transform 160ms;
+  box-shadow: inset 0 1px rgba(255,255,255,0.04);
   font-weight: 650;
 }
 .app-shell
@@ -124,15 +124,16 @@
   color: #ffe0d8;
 }
 .app-shell .flashcards .study-card .study-arrow {
-  background: #242c27f5;
-  color: #e1f6ef;
+  background: #06284df5;
+  border-color: #8ac4ff55;
+  color: #d5eaff;
 }
 .app-shell .draft-note {
   color: #edc08c;
 }
 .app-shell progress {
   appearance: none;
-  height: 8px;
+  height: 6px;
   border: 0;
   border-radius: 999px;
   background: var(--surface-tint);
@@ -142,7 +143,8 @@
   background: var(--surface-tint);
 }
 .app-shell progress::-webkit-progress-value {
-  background: var(--primary);
+  background: linear-gradient(90deg, var(--primary), var(--primary-dark));
+  border-radius: inherit;
 }
 .app-shell progress::-moz-progress-bar {
   background: var(--primary);
@@ -172,16 +174,16 @@
   font-size: 28px;
 }
 .app-shell .dashboard-welcome {
-  min-height: 420px;
-  padding: 46px;
-  margin-bottom: 32px;
-  border: 1px solid #214b3d;
+  min-height: 400px;
+  padding: 44px;
+  margin-bottom: 28px;
+  border: 1px solid #1e4a3b;
   border-radius: 24px;
   color: var(--text);
   background:
-    radial-gradient(ellipse at 0 0, #00654d30, transparent 55%),
-    radial-gradient(ellipse at 100% 100%, #b351151c, transparent 50%),
-    radial-gradient(#b7c8bc13 0.7px, transparent 0.7px), #0e100d;
+    radial-gradient(ellipse at 0 0, #006850 22%, transparent 55%),
+    radial-gradient(ellipse at 100% 100%, #b3511520, transparent 50%),
+    radial-gradient(#b7c8bc10 0.7px, transparent 0.7px), #0d1210;
   background-size:
     auto,
     auto,
@@ -428,30 +430,8 @@
   background: var(--surface);
   font-size: 13px;
 }
-.app-shell .study-front {
-  background:
-    radial-gradient(ellipse at 100% 0, #289c80, transparent 65%),
-    linear-gradient(135deg, #084d45, #007f70);
-}
-.app-shell .study-back {
-  background: linear-gradient(135deg, #222923, #142b22);
-}
-.app-shell .study-back::after {
-  background: #1f634d;
-  opacity: 0.25;
-}
 .app-shell .study-back .card-flip {
   opacity: 1;
-}
-.app-shell .study-face {
-  border-color: #3d6f59;
-  box-shadow: 0 18px 50px #173e361f;
-}
-.app-shell .study-face::before {
-  border-color: #95d0b926;
-}
-.app-shell .quiz-card {
-  padding: 36px;
 }
 .app-shell .quiz-letter {
   display: grid;
@@ -460,9 +440,6 @@
   height: 32px;
   border-radius: 8px;
   background: var(--surface-tint);
-}
-.app-shell .quiz-option {
-  padding: 18px;
 }
 .app-shell .data-management section {
   padding: 28px;
@@ -523,7 +500,7 @@
       .quiz-page,
       .data-management
     ) {
-    padding: 28px 16px 44px;
+    padding: 20px 14px 48px;
   }
   .app-shell .dashboard-welcome {
     padding: 26px 22px;
