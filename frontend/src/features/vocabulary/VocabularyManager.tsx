@@ -53,9 +53,13 @@ function getPhonetic(word: string): string {
 
 export function VocabularyManager({
   repository,
+  addTrigger = 0,
 }: {
   repository: VocabularyRepository
+  addTrigger?: number
 }) {
+  const addButton = useRef<HTMLButtonElement>(null)
+  const handledAddTrigger = useRef(0)
   const t = useUiText()
   function fieldLabel(key: Field) {
     return t(
@@ -86,6 +90,12 @@ export function VocabularyManager({
   const [tableMode, setTableMode] = useState<'all' | 'pages'>('pages')
   const [pageSize, setPageSize] = useState(20)
   const [page, setPage] = useState(0)
+
+  useEffect(() => {
+    if (loading || busy || addTrigger === handledAddTrigger.current) return
+    handledAddTrigger.current = addTrigger
+    addButton.current?.click()
+  }, [addTrigger, loading, busy])
 
   const dirty =
     draft !== null &&
@@ -421,6 +431,7 @@ export function VocabularyManager({
             type="button"
             className="lexicon-primary-btn"
             disabled={loading || busy}
+            ref={addButton}
             aria-label={t('Add vocabulary')}
             onClick={() => start(null)}
           >

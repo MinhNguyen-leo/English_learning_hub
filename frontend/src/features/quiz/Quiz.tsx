@@ -44,17 +44,6 @@ function getPhonetic(word: string): string {
   return map[word.toLowerCase()] || `/${word.toLowerCase()}/`
 }
 
-function getEtymology(word: string): string {
-  const map: Record<string, string> = {
-    meticulous: 'Latin: meticulosus (fearful → painstakingly timid)',
-    pragmatic: 'Greek: pragmatikos (fit for action, business-like)',
-    ephemeral: 'Greek: ephemeros (lasting only one day)',
-    ubiquitous: 'Latin: ubique (turning up everywhere)',
-    lucid: 'Latin: lucidus (shining, clear, perspicuous)',
-    resilient: 'Latin: resilire (to leap back, rebound)',
-  }
-  return map[word.toLowerCase()] || 'Proto-Indo-European lexical root'
-}
 
 export function Quiz({
   repository,
@@ -226,8 +215,9 @@ export function Quiz({
       if (!session || session.finished || busy || submitted !== null) return
       const key = e.key.toUpperCase()
       const keyMap: Record<string, number> = { A: 0, B: 1, C: 2, D: 3 }
-      if (key in keyMap && question && keyMap[key] < question.options.length) {
-        setSelected(keyMap[key])
+      const choice = keyMap[key]
+      if (choice !== undefined && question && choice < question.options.length) {
+        setSelected(choice)
       }
       if (e.key === 'Enter' && selected !== null) {
         act({ type: 'submit', choice: selected })
@@ -241,7 +231,6 @@ export function Quiz({
   const currentIndex = session?.index ?? 0
   const completedCount = session?.answers.filter((a) => a !== null).length ?? 0
   const upcomingCount = Math.max(0, totalQuestions - currentIndex - 1)
-  const accuracyPct = results && results.answered > 0 ? Math.round((results.correct / results.answered) * 100) : 100
 
   return (
     <main className="quiz-page lexicon-quiz-dark" ref={quizRoot}>

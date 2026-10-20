@@ -280,3 +280,17 @@ it('saves an inline edit and requires confirmation to delete', async () => {
     expect(screen.queryByRole('button', { name: 'Word for bank' })).toBeNull(),
   )
 })
+
+it('opens Quick Add after loading and preserves drafts when discard is declined', async () => {
+  const repo = repository()
+  const user = userEvent.setup()
+  const { rerender } = render(<VocabularyManager repository={repo} addTrigger={1} />)
+  expect(await screen.findByLabelText('Word')).toHaveProperty('value', '')
+  await user.type(screen.getByLabelText('Word'), 'bank')
+  rerender(<VocabularyManager repository={repo} addTrigger={1} />)
+  expect(screen.getByLabelText('Word')).toHaveProperty('value', 'bank')
+  vi.spyOn(window, 'confirm').mockReturnValue(false)
+  rerender(<VocabularyManager repository={repo} addTrigger={2} />)
+  expect(window.confirm).toHaveBeenCalled()
+  expect(screen.getByLabelText('Word')).toHaveProperty('value', 'bank')
+})

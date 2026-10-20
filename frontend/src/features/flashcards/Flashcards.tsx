@@ -50,41 +50,7 @@ function getPhonetic(word: string): string {
   return map[word.toLowerCase()] || `/${word.toLowerCase()}/`
 }
 
-function getEtymology(word: string): string {
-  const map: Record<string, string> = {
-    eloquence: 'From Latin eloquentia, derived from eloqui ("to speak out").',
-    meticulous: 'Latin: meticulosus (fearful → painstakingly timid)',
-    pragmatic: 'Greek: pragmatikos (fit for action, business-like)',
-    ephemeral: 'Greek: ephemeros (lasting only one day)',
-    ubiquitous: 'Latin: ubique (turning up everywhere)',
-    lucid: 'Latin: lucidus (shining, clear, perspicuous)',
-    resilient: 'Latin: resilire (to leap back, rebound)',
-  }
-  return (
-    map[word.toLowerCase()] ||
-    'From Latin and Greek classical roots adapted into formal academic usage.'
-  )
-}
 
-function getCollocations(word: string): string {
-  const map: Record<string, string> = {
-    eloquence:
-      'Passionate eloquence, natural eloquence, speaks with rare eloquence.',
-    meticulous:
-      'Meticulous research, meticulous attention to detail, meticulously planned.',
-    pragmatic:
-      'Pragmatic approach, pragmatic solution, pragmatic considerations.',
-    ephemeral: 'Ephemeral nature, ephemeral pleasure, ephemeral beauty.',
-    ubiquitous:
-      'Ubiquitous presence, become ubiquitous, ubiquitous computing.',
-    lucid: 'Lucid explanation, lucid dreams, lucid presentation.',
-    resilient: 'Resilient economy, highly resilient, resilient materials.',
-  }
-  return (
-    map[word.toLowerCase()] ||
-    `High-frequency academic and formal collocations with ${word}.`
-  )
-}
 
 export function Flashcards({
   repository,

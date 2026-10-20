@@ -2,6 +2,7 @@ import { useUiText } from '../../lib/useUiText'
 import i18n from '../../lib/i18n'
 import { useEffect, useRef, useState, useId } from 'react'
 import {
+  createBackup,
   conflicts,
   counts,
   readBackupFile,
@@ -11,15 +12,7 @@ import {
 import type { BackupRepository, RestorePreview } from './repository'
 import { exportXlsx } from '../spreadsheet/xlsx'
 import { downloadXlsx } from '../spreadsheet/browser'
-import {
-  Button,
-  Card,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-  CardContent,
-  Badge,
-} from '../../components/ui'
+import { Button, Card, Badge } from '../../components/ui'
 import './backup.css'
 
 const labels: Record<keyof BackupData, string> = {
@@ -194,16 +187,12 @@ export function DataManagement({
   function resetDatabase() {
     void run(async () => {
       setResetConfirming(false)
-      const emptyBackup = {
-        formatVersion: 1 as const,
-        exportedAt: new Date().toISOString(),
-        data: {
-          vocabulary: [],
-          flashcardSessions: [],
-          quizSessions: [],
-          settings: [],
-        },
-      }
+      const emptyBackup = createBackup({
+        vocabulary: [],
+        flashcardSessions: [],
+        quizSessions: [],
+        settings: [],
+      })
       const previewObj = await repository.preview(emptyBackup)
       await repository.restore(previewObj, 'replace', true)
       await onRestored()
