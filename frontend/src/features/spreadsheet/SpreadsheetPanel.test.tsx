@@ -97,7 +97,7 @@ it('maps custom columns, previews invalid and duplicate rows, and requires conse
   await user.selectOptions(screen.getByLabelText('Duplicate handling'), 'keep')
   await user.click(screen.getByRole('checkbox'))
   await user.click(confirm)
-  await waitFor(() => expect(imported).toHaveBeenCalledWith([]))
+  await waitFor(() => expect(imported).toHaveBeenCalledWith([], ['hello']))
   expect(repo.importEntries).toHaveBeenCalledWith(
     [
       {
@@ -266,5 +266,31 @@ it('shows file errors without writing and blocks preview until required columns 
       .getByRole('button', { name: 'Preview import' })
       .hasAttribute('disabled'),
   ).toBe(true)
+  expect(repo.importEntries).not.toHaveBeenCalled()
+})
+
+it('warns about matching words even when their meanings differ', async () => {
+  vi.mocked(repo.list).mockResolvedValue([
+    {
+      ...emptyInput,
+      id: '1',
+      word: 'HELLO',
+      english_meaning: 'another meaning',
+      created_at: '2026-01-01T00:00:00Z',
+      updated_at: '2026-01-01T00:00:00Z',
+    },
+  ])
+  const user = userEvent.setup()
+  render(
+    <SpreadsheetPanel
+      repository={repo}
+      onClose={vi.fn()}
+      onImported={vi.fn()}
+    />,
+  )
+  await uploadAndMap(user)
+  expect(
+    screen.getByText(/Repeated words in this file or your library: hello/),
+  ).toBeTruthy()
   expect(repo.importEntries).not.toHaveBeenCalled()
 })

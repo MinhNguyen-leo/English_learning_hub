@@ -2,6 +2,7 @@ import { useUiText } from '../../lib/useUiText'
 import { lazy, Suspense, useEffect, useRef, useState } from 'react'
 import {
   emptyInput,
+  wordKey,
   fieldNames,
   fields,
   queryVocabulary,
@@ -78,10 +79,20 @@ export function VocabularyManager({
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
   const [status, setStatus] = useState('')
+  const wordCounts = new Map<string, number>()
+  for (const row of rows) {
+    const key = wordKey(row.word)
+    wordCounts.set(key, (wordCounts.get(key) ?? 0) + 1)
+  }
+  const repeatedWords = [...wordCounts.entries()]
+    .filter(([, count]) => count > 1)
+    .map(([word]) => word)
+    .sort((a, b) => a.localeCompare(b))
   const [draft, setDraft] = useState<Draft | null>(null)
   const [activeField, setActiveField] = useState<Field>('word')
   const [errors, setErrors] = useState<Partial<Record<Field, string>>>({})
   const [search, setSearch] = useState('')
+  const [duplicateFilter, setDuplicateFilter] = useState<string | null>(null)
   const [part, setPart] = useState('')
   const [statusFilter, setStatusFilter] = useState('')
   const [sort, setSort] = useState<keyof Vocabulary>('word')
@@ -96,6 +107,15 @@ export function VocabularyManager({
     handledAddTrigger.current = addTrigger
     addButton.current?.click()
   }, [addTrigger, loading, busy])
+
+  const duplicateWord =
+    draft &&
+    wordKey(draft.input.word) &&
+    rows.some(
+      (row) =>
+        row.id !== draft.original?.id &&
+        wordKey(row.word) === wordKey(draft.input.word),
+    )
 
   const dirty =
     draft !== null &&
@@ -168,6 +188,20 @@ export function VocabularyManager({
     setErrors({})
     setStatus('')
     try {
+      if (!draft.original) {
+        const existing = await repository.list()
+        if (
+          existing.some(
+            (row) => wordKey(row.word) === wordKey(draft.input.word),
+          ) &&
+          !window.confirm(
+            t(
+              'This word already exists in your library. Save another entry with a different meaning?',
+            ),
+          )
+        )
+          return
+      }
       const saved = draft.original
         ? await repository.update(
             draft.original.id,
@@ -345,7 +379,10 @@ export function VocabularyManager({
     ))
   }
 
-  const visible = queryVocabulary(rows, search, part, sort, direction)
+  const visible = queryVocabulary(
+    duplicateFilter === null ? rows : rows.filter((row) => wordKey(row.word) === duplicateFilter),
+    duplicateFilter === null ? search : '', part, sort, direction,
+  )
   const matching =
     draft?.original && !visible.some((row) => row.id === draft.original?.id)
       ? [draft.original, ...visible]
@@ -484,6 +521,7 @@ export function VocabularyManager({
               aria-label={t('Search')}
               onChange={(event) => {
                 setSearch(event.target.value)
+                setDuplicateFilter(null)
                 setPage(0)
               }}
               className="bg-transparent border-none focus-visible:ring-0 h-auto p-0"
@@ -562,22 +600,23 @@ export function VocabularyManager({
           </div>
         </div>
 
-        {/* Hidden select elements for sort/direction for accessibility */}
-        <div className="sr-only">
+        {/* Vocabulary sorting */}
+        <div className="vocab-sort-controls">
           <label>
             {t('Sort by')}
             <select
               value={sort}
-              onChange={(event) =>
+              onChange={(event) => {
                 setSort(event.target.value as keyof Vocabulary)
-              }
+                setPage(0)
+              }}
             >
               {[...fieldNames, 'created_at', 'updated_at'].map((key) => (
                 <option key={key} value={key}>
                   {key in fields
                     ? fieldLabel(key as Field)
                     : key === 'created_at'
-                      ? t('Created')
+                      ? t('Time added')
                       : t('Updated')}
                 </option>
               ))}
@@ -587,12 +626,25 @@ export function VocabularyManager({
             {t('Order')}
             <select
               value={direction}
-              onChange={(event) =>
+              onChange={(event) => {
                 setDirection(event.target.value as 'asc' | 'desc')
-              }
+                setPage(0)
+              }}
             >
-              <option value="asc">{t('Ascending')}</option>
-              <option value="desc">{t('Descending')}</option>
+              <option value="asc">
+                {sort === 'word'
+                  ? t('A-Z')
+                  : sort === 'created_at' || sort === 'updated_at'
+                    ? t('Oldest first')
+                    : t('Ascending')}
+              </option>
+              <option value="desc">
+                {sort === 'word'
+                  ? t('Z-A')
+                  : sort === 'created_at' || sort === 'updated_at'
+                    ? t('Newest first')
+                    : t('Descending')}
+              </option>
             </select>
           </label>
         </div>
@@ -713,6 +765,55 @@ export function VocabularyManager({
           </Alert>
         )}
 
+        {repeatedWords.length > 0 && (
+          <aside role="status" className="duplicate-word-warning">
+            <strong>{t('Repeated words in your library:')}</strong>
+            <ul>
+              {repeatedWords.map((word) => (
+                <li key={word} className="duplicate-word-item">
+                  <span>{word}</span>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    disabled={draft !== null || busy}
+                    aria-label={t('Find duplicates of {{word}}', { word })}
+                    onClick={() => {
+                      setSearch(word)
+                      setDuplicateFilter(word)
+                      setPart('')
+                      setStatusFilter('')
+                      setPage(0)
+                    }}
+                  >
+                    {t('Find in table')}
+                  </Button>
+                </li>
+              ))}
+            </ul>
+            <p>
+              {t(
+                'These words currently have multiple entries in your library. This list updates when you edit or delete entries.',
+              )}
+            </p>
+          </aside>
+        )}
+        {duplicateFilter !== null && (
+          <div className="duplicate-filter-summary">
+            <span>{t('Showing entries for: {{word}}', { word: duplicateFilter })}</span>
+            <Button type="button" variant="outline" size="sm" disabled={draft !== null || busy}
+              onClick={() => { setDuplicateFilter(null); setSearch(''); setPage(0) }}>
+              {t('Show all words')}
+            </Button>
+          </div>
+        )}
+        {duplicateWord && (
+          <p role="status" className="duplicate-word-warning">
+            {t(
+              'This word already exists in your library. Check its meanings before saving.',
+            )}
+          </p>
+        )}
         <p role="status" className="status-indicator">
           {loading
             ? t('Loading vocabulary...')

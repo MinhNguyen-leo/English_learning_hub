@@ -336,12 +336,26 @@
   font-size: 0.8125rem;
 }
 
-.lexicon-master-table tbody tr:hover td {
-  background: rgba(30, 41, 59, 0.4);
+.app-shell .vocabulary-manager .lexicon-master-table tbody td {
+  border-bottom: 2px solid #475569;
 }
-
-.lexicon-master-table tbody tr.row-selected td {
-  background: rgba(37, 99, 235, 0.12);
+.app-shell .vocabulary-manager .lexicon-master-table tbody tr:nth-child(odd) td {
+  background: #101827;
+}
+.app-shell .vocabulary-manager .lexicon-master-table tbody tr:nth-child(even) td {
+  background: #202d40;
+}
+.app-shell .vocabulary-manager .lexicon-master-table tbody tr:is(:hover, :focus-within) td {
+  background: #30435d;
+}
+.app-shell .vocabulary-manager .lexicon-master-table tbody tr:is(:hover, :focus-within) td:first-child {
+  box-shadow: inset 3px 0 #67e8f9;
+}
+.app-shell .vocabulary-manager .lexicon-master-table tbody tr.row-selected td {
+  background: #1e4070;
+}
+.app-shell .vocabulary-manager .lexicon-master-table tbody tr.row-selected td:first-child {
+  box-shadow: inset 3px 0 #60a5fa;
 }
 
 .th-checkbox,
@@ -716,3 +730,35 @@
     grid-template-columns: 1fr;
   }
 }
+
+.vocab-sort-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+.vocab-sort-controls label {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  color: #cbd5e1;
+}
+.vocab-sort-controls select {
+  max-width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #475569;
+  border-radius: 8px;
+  background: #0f172a;
+  color: #f1f5f9;
+}
+.duplicate-word-warning {
+  padding: 12px;
+  border: 1px solid #d97706;
+  border-radius: 8px;
+  color: #fcd34d;
+  overflow-wrap: anywhere;
+}
+
+.duplicate-word-item, .duplicate-filter-summary { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin: 8px 0; }
+.duplicate-word-item > span { min-width: min(180px, 100%); }

@@ -284,7 +284,9 @@ it('saves an inline edit and requires confirmation to delete', async () => {
 it('opens Quick Add after loading and preserves drafts when discard is declined', async () => {
   const repo = repository()
   const user = userEvent.setup()
-  const { rerender } = render(<VocabularyManager repository={repo} addTrigger={1} />)
+  const { rerender } = render(
+    <VocabularyManager repository={repo} addTrigger={1} />,
+  )
   expect(await screen.findByLabelText('Word')).toHaveProperty('value', '')
   await user.type(screen.getByLabelText('Word'), 'bank')
   rerender(<VocabularyManager repository={repo} addTrigger={1} />)
@@ -293,4 +295,138 @@ it('opens Quick Add after loading and preserves drafts when discard is declined'
   rerender(<VocabularyManager repository={repo} addTrigger={2} />)
   expect(window.confirm).toHaveBeenCalled()
   expect(screen.getByLabelText('Word')).toHaveProperty('value', 'bank')
+})
+
+it('sorts words alphabetically and by time added', async () => {
+  const repo = repository()
+  vi.mocked(repo.list).mockResolvedValue([
+    {
+      ...emptyInput,
+      id: '1',
+      word: 'zebra',
+      english_meaning: 'animal',
+      created_at: '2026-01-01T00:00:00Z',
+      updated_at: '2026-01-01T00:00:00Z',
+    },
+    {
+      ...emptyInput,
+      id: '2',
+      word: 'apple',
+      english_meaning: 'fruit',
+      created_at: '2026-02-01T00:00:00Z',
+      updated_at: '2026-02-01T00:00:00Z',
+    },
+  ])
+  const user = userEvent.setup()
+  render(<VocabularyManager repository={repo} />)
+  await screen.findByRole('button', { name: 'Word for apple' })
+  const words = () =>
+    within(screen.getByRole('table'))
+      .getAllByRole('button', { name: /^Word for/ })
+      .map((button) => button.getAttribute('aria-label'))
+  expect(words()).toEqual(['Word for apple', 'Word for zebra'])
+  await user.selectOptions(screen.getByLabelText('Order'), 'desc')
+  expect(words()).toEqual(['Word for zebra', 'Word for apple'])
+  await user.selectOptions(screen.getByLabelText('Sort by'), 'created_at')
+  expect(words()).toEqual(['Word for apple', 'Word for zebra'])
+  await user.selectOptions(screen.getByLabelText('Order'), 'asc')
+  expect(words()).toEqual(['Word for zebra', 'Word for apple'])
+})
+it('warns about a repeated word with a different meaning and preserves the draft on cancel', async () => {
+  const repo = repository()
+  vi.mocked(repo.list).mockResolvedValue([
+    {
+      ...emptyInput,
+      id: '1',
+      word: 'bank',
+      english_meaning: 'river side',
+      created_at: '2026-01-01T00:00:00Z',
+      updated_at: '2026-01-01T00:00:00Z',
+    },
+  ])
+  const user = userEvent.setup()
+  render(<VocabularyManager repository={repo} />)
+  await screen.findByRole('button', { name: 'Word for bank' })
+  await user.click(screen.getByRole('button', { name: 'Add vocabulary' }))
+  await user.type(screen.getByLabelText('Word'), ' BANK ')
+  await user.type(screen.getByLabelText('Definition'), 'financial institution')
+  expect(
+    screen.getByText(
+      'This word already exists in your library. Check its meanings before saving.',
+    ),
+  ).toBeTruthy()
+  vi.spyOn(window, 'confirm').mockReturnValue(false)
+  await user.click(screen.getByRole('button', { name: 'Save' }))
+  await waitFor(() => expect(window.confirm).toHaveBeenCalled())
+  expect(repo.create).not.toHaveBeenCalled()
+  expect(screen.getByLabelText('Word')).toHaveProperty('value', ' BANK ')
+})
+
+it('updates the import notification after duplicates are deleted and preserves it on storage failure', async () => {
+  vi.spyOn(await import('../spreadsheet/browser'), 'readUpload').mockResolvedValue({
+    name: 'Words', headers: ['word', 'english_meaning'], warnings: [],
+    rows: [
+      { rowNumber: 2, cells: [{ text: 'bank', error: '' }, { text: 'river side', error: '' }] },
+      { rowNumber: 3, cells: [{ text: 'BANK', error: '' }, { text: 'financial institution', error: '' }] },
+    ],
+  })
+  const repo = repository()
+  vi.mocked(repo.importEntries).mockResolvedValue([
+    { ...emptyInput, id: '1', word: 'bank', english_meaning: 'river side', created_at: '2026-01-01T00:00:00Z', updated_at: '2026-01-01T00:00:00Z' },
+    { ...emptyInput, id: '2', word: 'BANK', english_meaning: 'financial institution', created_at: '2026-01-01T00:00:00Z', updated_at: '2026-01-01T00:00:00Z' },
+  ])
+  const user = userEvent.setup()
+  render(<VocabularyManager repository={repo} />)
+  await waitFor(() => expect(screen.getByRole('button', { name: 'Add vocabulary' })).toHaveProperty('disabled', false))
+  await user.click(screen.getByRole('button', { name: /Import \/ Export XLSX/ }))
+  await user.upload(await screen.findByLabelText('XLSX file'), new File(['data'], 'words.xlsx', { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }))
+  await screen.findByRole('heading', { name: /Map columns/ })
+  await user.click(screen.getByRole('button', { name: 'Preview import' }))
+  await user.click(await screen.findByRole('button', { name: 'Confirm import' }))
+  expect(await screen.findByText('Repeated words in your library:')).toBeTruthy()
+  expect(screen.queryByLabelText('XLSX file')).toBeNull()
+  expect(within(screen.getByRole('listitem')).getByText('bank')).toBeTruthy()
+  vi.spyOn(window, 'confirm').mockReturnValue(true)
+  vi.mocked(repo.delete).mockRejectedValueOnce(new Error('Storage failed'))
+  const deleteButton = screen.getAllByRole('button', { name: /Delete/ }).find(button => button.getAttribute('aria-label')?.includes('bank'))
+  expect(deleteButton).toBeTruthy()
+  await user.click(deleteButton!)
+  expect(await screen.findByText('Storage failed')).toBeTruthy()
+  expect(screen.getByText('Repeated words in your library:')).toBeTruthy()
+  await user.click(deleteButton!)
+  await waitFor(() => expect(screen.queryByText('Repeated words in your library:')).toBeNull())
+  expect(screen.queryByText('Repeated words in your library:')).toBeNull()
+})
+
+it('detects existing repeated words on every load without an import and regardless of search', async () => {
+  const repo = repository()
+  vi.mocked(repo.list).mockResolvedValue([
+    { ...emptyInput, id: '1', word: 'demanding', english_meaning: 'hard', created_at: '2026-01-01T00:00:00Z', updated_at: '2026-01-01T00:00:00Z' },
+    { ...emptyInput, id: '2', word: ' DEMANDING ', english_meaning: 'requires effort', created_at: '2026-01-01T00:00:00Z', updated_at: '2026-01-01T00:00:00Z' },
+  ])
+  const user = userEvent.setup()
+  const first = render(<VocabularyManager repository={repo} />)
+  expect(await screen.findByText('Repeated words in your library:')).toBeTruthy()
+  expect(within(screen.getByRole('listitem')).getByText('demanding')).toBeTruthy()
+  await user.type(screen.getByRole('searchbox', { name: 'Search' }), 'unrelated')
+  expect(screen.getByText('Repeated words in your library:')).toBeTruthy()
+  first.unmount()
+  render(<VocabularyManager repository={repo} />)
+  expect(await screen.findByText('Repeated words in your library:')).toBeTruthy()
+})
+
+it('finds only the chosen repeated word and can return to all words', async () => {
+  const repo = repository()
+  vi.mocked(repo.list).mockResolvedValue(['bank', ' BANK ', 'banking', 'other'].map((word, index) => ({ ...emptyInput, id: String(index), word, english_meaning: 'bank definition', created_at: '2026-01-01T00:00:00Z', updated_at: '2026-01-01T00:00:00Z' })))
+  const user = userEvent.setup()
+  render(<VocabularyManager repository={repo} />)
+  await user.click(await screen.findByRole('button', { name: 'Find duplicates of bank' }))
+  const table = screen.getByRole('table')
+  expect(within(table).getAllByRole('button', { name: /^Word for/ })).toHaveLength(2)
+  expect(within(table).queryByRole('button', { name: 'Word for banking' })).toBeNull()
+  await user.click(screen.getByRole('button', { name: 'Show all words' }))
+  expect(within(table).getAllByRole('button', { name: /^Word for/ })).toHaveLength(4)
+  await user.click(screen.getByRole('button', { name: 'Find duplicates of bank' }))
+  await user.clear(screen.getByRole('searchbox', { name: 'Search' }))
+  expect(within(table).getAllByRole('button', { name: /^Word for/ })).toHaveLength(4)
 })

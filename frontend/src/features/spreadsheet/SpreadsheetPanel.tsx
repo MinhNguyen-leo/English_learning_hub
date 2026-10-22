@@ -2,6 +2,7 @@ import { useUiText } from '../../lib/useUiText'
 import { useImperativeHandle, useState, type Ref } from 'react'
 import {
   duplicateKey,
+  wordKey,
   fieldNames,
   fields,
   type Field,
@@ -40,7 +41,7 @@ export default function SpreadsheetPanel({
 }: {
   repository: VocabularyRepository
   onClose: () => void
-  onImported: (rows: Vocabulary[]) => void
+  onImported: (rows: Vocabulary[], repeatedWords: string[]) => void
   ref?: Ref<SpreadsheetPanelHandle>
 }) {
   const t = useUiText()
@@ -104,6 +105,13 @@ export default function SpreadsheetPanel({
         policy,
       )
     : null
+  const seenWords = new Set(preview?.snapshot.map((row) => wordKey(row.word)))
+  const repeatedWords = new Set<string>()
+  for (const row of valid) {
+    const key = wordKey(row.input.word)
+    if (seenWords.has(key)) repeatedWords.add(key)
+    seenWords.add(key)
+  }
   const seen = new Set(preview?.snapshot.map(duplicateKey))
   const annotated =
     preview?.rows.map((row) => {
@@ -281,6 +289,7 @@ export default function SpreadsheetPanel({
             )}
             {!preview && (
               <button
+                className="preview-import-button"
                 disabled={mappingIssues.length > 0}
                 onClick={() => void makePreview()}
               >
@@ -292,6 +301,14 @@ export default function SpreadsheetPanel({
         {preview && plan && (
           <>
             <h3>{t('2. Review and import')}</h3>
+            {repeatedWords.size > 0 && (
+              <p role="status" className="duplicate-word-warning">
+                {t(
+                  'Repeated words in this file or your library: {{words}}. Check their meanings before importing.',
+                  { words: [...repeatedWords].join(', ') },
+                )}
+              </p>
+            )}
             <p>
               {valid.length} {t('valid rows;')} {invalidCount}{' '}
               {t('invalid rows;')} {plan.duplicates}{' '}
@@ -432,7 +449,7 @@ export default function SpreadsheetPanel({
                       policy,
                       preview.snapshot,
                     )
-                    onImported(rows)
+                    onImported(rows, [...repeatedWords])
                   })
                 }
               >

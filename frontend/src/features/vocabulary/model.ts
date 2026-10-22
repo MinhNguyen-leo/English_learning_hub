@@ -27,6 +27,9 @@ export const emptyInput: VocabularyInput = {
   note: '',
 }
 export class VocabularyError extends Error {}
+export function wordKey(word: string): string {
+  return word.normalize('NFC').trim().toLowerCase()
+}
 export function duplicateKey(input: VocabularyInput): string {
   return JSON.stringify(
     [
