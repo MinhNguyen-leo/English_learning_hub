@@ -38,6 +38,11 @@ export function Tutorial({ onClose }: { onClose: () => void }) {
 
   function changeStep(newStep: number) {
     if (newStep === step || newStep < 0 || newStep >= titles.length) return
+    // Continue from the visible pose when navigation interrupts an entrance.
+    const pose = card.current ? getComputedStyle(card.current) : null
+    const transform =
+      pose?.transform === 'none' ? 'translate3d(0, 0, 0)' : pose?.transform
+    const opacity = pose?.opacity || '1'
     clearTransition()
     const element = card.current
     if (
@@ -58,15 +63,15 @@ export function Tutorial({ onClose }: { onClose: () => void }) {
         outgoingContent.scrollTop = content.current?.scrollTop ?? 0
       const sign = newStep > step ? 1 : -1
       const timing = {
-        duration: 460,
-        easing: 'cubic-bezier(0.22, 0.7, 0.2, 1)',
+        duration: 520,
+        easing: 'cubic-bezier(0.16, 1, 0.3, 1)',
         fill: 'both' as const,
       }
       const exit = outgoing.animate(
         [
-          { transform: 'translateX(0) rotate(0deg)', opacity: 1 },
+          { transform, opacity },
           {
-            transform: `translateX(${sign * 110}%) translateY(-24px) rotate(${sign * 14}deg)`,
+            transform: `translate3d(${-sign * 64}px, -8px, 0) scale(0.98) rotate(${-sign * 2}deg)`,
             opacity: 0,
           },
         ],
@@ -75,10 +80,13 @@ export function Tutorial({ onClose }: { onClose: () => void }) {
       const enter = element.animate(
         [
           {
-            transform: `translateY(28px) scale(0.94) rotate(${-sign * 3}deg)`,
-            opacity: 0.6,
+            transform: `translate3d(${sign * 48}px, 14px, 0) scale(0.975) rotate(${sign * 1.2}deg)`,
+            opacity: 0,
           },
-          { transform: 'translateY(0) scale(1) rotate(0deg)', opacity: 1 },
+          {
+            transform: 'translate3d(0, 0, 0) scale(1) rotate(0deg)',
+            opacity: 1,
+          },
         ],
         timing,
       )
@@ -150,26 +158,30 @@ export function Tutorial({ onClose }: { onClose: () => void }) {
               <h2 id="tutorial-title">{t(titles[step])}</h2>
               {step === 0 && (
                 <>
-                  <p>
-                    {t(
-                      'Đây là một web thay thế cuốn vở ghi chép từ vựng của bạn, có thêm các tính năng hỗ trợ học để mỗi từ mới không chỉ được ghi lại, mà còn được nhớ lâu hơn.',
-                    )}
-                  </p>
-                  <div className="tutorial-note">
-                    {t(
-                      'Ghi từ mới → Sắp xếp → Ôn bằng thẻ → Thử sức với quiz.',
-                    )}
-                  </div>
+                  <p>{t('tutorial.intro')}</p>
+                  <div className="tutorial-note">{t('tutorial.workflow')}</div>
                   <p>
                     {t(
                       'Không cần đăng ký. Từ vựng được lưu ngay trên thiết bị bạn đang dùng.',
                     )}
                   </p>
                   <p className="tutorial-signature">author: minleo</p>
+                  <section className="tutorial-feature">
+                    <h3>{t('Progress')}</h3>
+                    <p>{t('tutorial.progress')}</p>
+                  </section>
                 </>
               )}
               {step === 1 && (
                 <>
+                  <section className="tutorial-feature">
+                    <h3>{t('Vocabulary')}</h3>
+                    <p>{t('tutorial.addWords')}</p>
+                  </section>
+                  <section className="tutorial-feature">
+                    <h3>{t('Translate')}</h3>
+                    <p>{t('tutorial.translate')}</p>
+                  </section>
                   <p>
                     {t(
                       'Có rồi? Bạn có thể nhập file .xlsx để tiếp tục học với bộ từ của mình. Chưa có? Tham khảo mẫu dưới đây hoặc thêm từ trực tiếp trong tab Vocabulary.',
@@ -279,6 +291,10 @@ export function Tutorial({ onClose }: { onClose: () => void }) {
                       'Một chút mỗi ngày. Học theo nhịp của bạn, tiến bộ theo cách của bạn.',
                     )}
                   </div>
+                  <section className="tutorial-feature">
+                    <h3>{t('Backup & Sync')}</h3>
+                    <p>{t('tutorial.backup')}</p>
+                  </section>
                 </>
               )}
               {step === 4 && (
@@ -288,11 +304,7 @@ export function Tutorial({ onClose }: { onClose: () => void }) {
                       'Dù aim của bạn là điểm thi, giao tiếp tự tin hơn hay đọc hiểu những điều mình thích, chúc bạn luôn giữ được động lực và từng bước chạm tới mục tiêu nhé.',
                     )}
                   </p>
-                  <div className="tutorial-note">
-                    {t(
-                      'Nếu thấy web hữu ích và có thể, bạn hãy support mình bằng một khoản donate nhỏ để mình có thêm động lực phát triển và hướng tới ra mắt nhiều tính năng AI hơn trong tương lai.',
-                    )}
-                  </div>
+                  <div className="tutorial-note">{t('tutorial.support')}</div>
                   <DonationQr />
                   <p>{t('Cảm ơn bạn đã ghé qua và học cùng English Hub ♡')}</p>
                   <p className="tutorial-signature">{t('— minleo')}</p>

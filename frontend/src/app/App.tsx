@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { VocabularyManager } from '../features/vocabulary/VocabularyManager'
 import { Flashcards } from '../features/flashcards/Flashcards'
 import { Quiz } from '../features/quiz/Quiz'
+import { Translate } from '../features/translate/Translate'
 import { DataManagement } from '../features/backup/DataManagement'
 import { IndexedDBBackupRepository } from '../features/backup/repository'
 import { IndexedDBQuizProgressRepository } from '../features/quiz/progressRepository'
@@ -107,9 +108,11 @@ function LearningHub({
   const { repository, progress, quizProgress } = runtime
   const streak = useVisitStreak(streakRepository)
   const [view, setView] = useState<
-    'vocabulary' | 'flashcards' | 'quiz' | 'data' | 'dashboard'
+    'vocabulary' | 'flashcards' | 'quiz' | 'data' | 'dashboard' | 'translate'
   >('dashboard')
   const [studyOpened, setStudyOpened] = useState(false)
+  const [translateOpened, setTranslateOpened] = useState(false)
+  const [vocabularyRevision, setVocabularyRevision] = useState(0)
   const [quizOpened, setQuizOpened] = useState(false)
   const [dataOpened, setDataOpened] = useState(false)
   const [tutorialOpen, setTutorialOpen] = useState(false)
@@ -179,6 +182,15 @@ function LearningHub({
               onClick={() => setView('vocabulary')}
             >
               {t('Vocabulary')}
+            </button>
+            <button
+              aria-pressed={view === 'translate'}
+              onClick={() => {
+                setTranslateOpened(true)
+                setView('translate')
+              }}
+            >
+              {t('Translate')}
             </button>
             <button
               aria-pressed={view === 'flashcards'}
@@ -371,8 +383,23 @@ function LearningHub({
           key={`vocabulary-${runtime.generation}`}
           hidden={view !== 'vocabulary'}
         >
-          <VocabularyManager repository={repository} addTrigger={quickAddTrigger} />
+          <VocabularyManager
+            repository={repository}
+            addTrigger={quickAddTrigger}
+            refreshTrigger={vocabularyRevision}
+          />
         </div>
+        {translateOpened && (
+          <div
+            key={`translate-${runtime.generation}`}
+            hidden={view !== 'translate'}
+          >
+            <Translate
+              repository={repository}
+              onSaved={() => setVocabularyRevision((value) => value + 1)}
+            />
+          </div>
+        )}
         {studyOpened && (
           <div
             key={`flashcards-${runtime.generation}`}

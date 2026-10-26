@@ -326,7 +326,7 @@ export function Quiz({
           {session && question && results && (
             <>
               {/* Progress Bar matching Image 4 */}
-              <div className="quiz-progress-section">
+              <div className="quiz-progress-section" hidden={session.finished}>
                 <div className="progress-label-row">
                   <p className="question-counter-text">
                     {t('Question')} {session.index + 1} {t('of')} {session.questions.length} · {t('Score:')} {results.correct} / {results.answered} {t('answered')}
@@ -360,42 +360,79 @@ export function Quiz({
               </div>
 
               {session.finished ? (
-                <Card role="region" className="quiz-card quiz-finish-card" aria-label={t('Quiz results')}>
-                  <div className="trophy-wrapper">🏆</div>
-                  <h2 className="quiz-finish-title">{t('Quiz complete')}</h2>
-                  <p className="quiz-score">
-                    {t('Score:')} {results.correct} / {results.total}
-                  </p>
-                  <p className="quiz-finish-sub">
-                    Mastery telemetry recorded locally. Spaced repetition weights updated.
-                  </p>
-                  <h3>
-                    {t('Missed vocabulary (')}
-                    {results.missed.length})
-                  </h3>
-                  {results.missed.length ? (
-                    <ul className="quiz-missed">
-                      {results.missed.map((word) => (
-                        <li key={word.id}>
-                          <strong>{word.word}</strong>
-                          <span>{word.english_meaning}</span>
-                          {word.vietnamese_meaning && (
-                            <span className="text-muted">{word.vietnamese_meaning}</span>
-                          )}
-                        </li>
-                      ))}
-                    </ul>
-                  ) : (
-                    <p className="all-correct-notice">{t('No missed words. Well done!')}</p>
-                  )}
-                  <Button
-                    type="button"
-                    className="btn-review-answers-primary"
-                    disabled={busy}
-                    onClick={() => act({ type: 'review' })}
+                <Card
+                  role="region"
+                  className="quiz-card quiz-finish-card"
+                  aria-label={t('Quiz results')}
+                >
+                  <div className="quiz-result-summary">
+                    <div className="trophy-wrapper" aria-hidden="true">
+                      🏆
+                    </div>
+                    <h2 className="quiz-finish-title">{t('Quiz complete')}</h2>
+                    <p className="quiz-score">
+                      {t('Score:')} {results.correct} / {results.total}
+                    </p>
+                    <p className="quiz-finish-sub">
+                      {t('Your quiz progress is saved in this browser.')}
+                    </p>
+                    <dl className="quiz-result-stats">
+                      <div>
+                        <dt>{t('Correct answers')}</dt>
+                        <dd>{results.correct}</dd>
+                      </div>
+                      <div>
+                        <dt>{t('Incorrect answers')}</dt>
+                        <dd>{results.total - results.correct}</dd>
+                      </div>
+                      <div>
+                        <dt>{t('Accuracy')}</dt>
+                        <dd>
+                          {Math.round((results.correct / results.total) * 100)}%
+                        </dd>
+                      </div>
+                    </dl>
+                  </div>
+                  <section
+                    className="quiz-result-review"
+                    aria-labelledby="quiz-missed-title"
                   >
-                    {t('Review answers')}
-                  </Button>
+                    <h3 id="quiz-missed-title">
+                      {t('Missed vocabulary (')}
+                      {results.missed.length})
+                    </h3>
+                    {results.missed.length ? (
+                      <ul className="quiz-missed">
+                        {results.missed.map((word) => (
+                          <li key={word.id}>
+                            <strong>{word.word}</strong>
+                            <div className="quiz-missed-meanings">
+                              <span>{word.english_meaning}</span>
+                              {word.vietnamese_meaning && (
+                                <span className="text-muted">
+                                  {word.vietnamese_meaning}
+                                </span>
+                              )}
+                            </div>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p className="all-correct-notice">
+                        {t('No missed words. Well done!')}
+                      </p>
+                    )}
+                  </section>
+                  <div className="quiz-result-actions">
+                    <Button
+                      type="button"
+                      className="btn-review-answers-primary"
+                      disabled={busy}
+                      onClick={() => act({ type: 'review' })}
+                    >
+                      {t('Review answers')}
+                    </Button>
+                  </div>
                 </Card>
               ) : (
                 <>

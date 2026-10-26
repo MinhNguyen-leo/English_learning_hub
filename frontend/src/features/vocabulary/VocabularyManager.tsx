@@ -2,6 +2,7 @@ import { useUiText } from '../../lib/useUiText'
 import { lazy, Suspense, useEffect, useRef, useState } from 'react'
 import {
   emptyInput,
+  duplicateKey,
   wordKey,
   fieldNames,
   fields,
@@ -55,9 +56,11 @@ function getPhonetic(word: string): string {
 export function VocabularyManager({
   repository,
   addTrigger = 0,
+  refreshTrigger = 0,
 }: {
   repository: VocabularyRepository
   addTrigger?: number
+  refreshTrigger?: number
 }) {
   const addButton = useRef<HTMLButtonElement>(null)
   const handledAddTrigger = useRef(0)
@@ -79,15 +82,17 @@ export function VocabularyManager({
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
   const [status, setStatus] = useState('')
-  const wordCounts = new Map<string, number>()
+  const duplicateCounts = new Map<string, number>()
   for (const row of rows) {
-    const key = wordKey(row.word)
-    wordCounts.set(key, (wordCounts.get(key) ?? 0) + 1)
+    const key = duplicateKey(row)
+    duplicateCounts.set(key, (duplicateCounts.get(key) ?? 0) + 1)
   }
-  const repeatedWords = [...wordCounts.entries()]
-    .filter(([, count]) => count > 1)
-    .map(([word]) => word)
-    .sort((a, b) => a.localeCompare(b))
+  const duplicateRows = rows.filter(
+    (row) => (duplicateCounts.get(duplicateKey(row)) ?? 0) > 1,
+  )
+  const repeatedWords = [
+    ...new Set(duplicateRows.map((row) => wordKey(row.word))),
+  ].sort((a, b) => a.localeCompare(b))
   const [draft, setDraft] = useState<Draft | null>(null)
   const [activeField, setActiveField] = useState<Field>('word')
   const [errors, setErrors] = useState<Partial<Record<Field, string>>>({})
@@ -137,7 +142,7 @@ export function VocabularyManager({
     return () => {
       active = false
     }
-  }, [repository])
+  }, [repository, refreshTrigger])
 
   useEffect(() => {
     if (!dirty) return
@@ -380,7 +385,9 @@ export function VocabularyManager({
   }
 
   const visible = queryVocabulary(
-    duplicateFilter === null ? rows : rows.filter((row) => wordKey(row.word) === duplicateFilter),
+    duplicateFilter === null
+      ? rows
+      : duplicateRows.filter((row) => wordKey(row.word) === duplicateFilter),
     duplicateFilter === null ? search : '', part, sort, direction,
   )
   const matching =
@@ -793,7 +800,7 @@ export function VocabularyManager({
             </ul>
             <p>
               {t(
-                'These words currently have multiple entries in your library. This list updates when you edit or delete entries.',
+                'Duplicates have the same word, part of speech, definition and translation. Different meanings or parts of speech are separate entries. This list updates when you edit or delete entries.',
               )}
             </p>
           </aside>

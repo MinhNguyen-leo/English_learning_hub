@@ -9,12 +9,13 @@ import {
   within,
 } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { afterAll, afterEach, beforeEach, expect, it } from 'vitest'
+import { afterAll, afterEach, beforeEach, expect, it, vi } from 'vitest'
 import App from './App'
 import { ApplicationDatabase } from '../db/ApplicationDatabase'
 import { IndexedDBBackupRepository } from '../features/backup/repository'
 import { fixture } from '../features/backup/testSupport'
 import i18n, { languageStorageKey } from '../lib/i18n'
+import { emptyInput } from '../features/vocabulary/model'
 
 const db = new ApplicationDatabase()
 afterEach(async () => {
@@ -38,6 +39,56 @@ beforeEach(() => {
     },
   })
 })
+it('adds a translation to the already mounted vocabulary tab without translating again', async () => {
+  const entry = {
+    ...emptyInput,
+    word: 'contextual-reputation',
+    vietnamese_meaning: 'Danh tiếng',
+  }
+  const fetcher = vi.fn((url: string) =>
+    Promise.resolve(
+      new Response(
+        JSON.stringify(
+          url.endsWith('/usage')
+            ? {
+                limit: 20,
+                remaining: 20,
+                resetAt: Date.now() + 86400000,
+                retryAt: Date.now(),
+                serverNow: Date.now(),
+              }
+            : { translation: 'Danh tiếng', entries: [entry] },
+        ),
+      ),
+    ),
+  )
+  vi.stubGlobal('fetch', fetcher)
+  try {
+    const user = userEvent.setup()
+    render(<App />)
+    await screen.findByRole('heading', { name: 'Learning Dashboard' })
+    await user.click(screen.getByRole('button', { name: 'Translate' }))
+    await user.type(screen.getByLabelText('English text'), 'reputation')
+    await user.click(
+      screen.getByRole('button', { name: 'Translate & explain' }),
+    )
+    await user.click(
+      await screen.findByRole('button', { name: 'Add to Vocab' }),
+    )
+    await screen.findByRole('button', { name: 'Added to Vocab' })
+    await user.click(screen.getByRole('button', { name: 'Vocabulary' }))
+    await screen.findByRole('button', {
+      name: 'Word for contextual-reputation',
+    })
+    await user.click(screen.getByRole('button', { name: 'Translate' }))
+    expect(screen.getByRole('button', { name: 'Added to Vocab' })).toBeTruthy()
+    expect(
+      fetcher.mock.calls.filter(([url]) => url === '/api/translate'),
+    ).toHaveLength(1)
+  } finally {
+    vi.unstubAllGlobals()
+  }
+})
 it('persists study preferences and reloads all mounted learning views after a confirmed restore', async () => {
   const repository = new IndexedDBBackupRepository(db)
   const original = fixture()
@@ -52,7 +103,14 @@ it('persists study preferences and reloads all mounted learning views after a co
     within(navigation)
       .getAllByRole('button')
       .map((button) => button.textContent),
-  ).toEqual(['Progress', 'Vocabulary', 'Flashcards', 'Quiz', 'Backup & Sync'])
+  ).toEqual([
+    'Progress',
+    'Vocabulary',
+    'Translate',
+    'Flashcards',
+    'Quiz',
+    'Backup & Sync',
+  ])
   expect(screen.queryByLabelText('Guest Academic Profile')).toBeNull()
   const brand = screen.getByRole('link', { name: 'English Learning Hub' })
   for (const target of [
@@ -188,6 +246,13 @@ it('switches the whole interface without losing vocabulary or the active draft a
   ).toHaveProperty('ariaChecked', 'true')
   expect(document.documentElement.lang).toBe('vi')
   expect(localStorage.getItem(languageStorageKey)).toBe('vi')
+  expect(screen.getByRole('button', { name: 'Tổng quan' }).textContent).toBe(
+    'Tiến độ',
+  )
+  expect(screen.getByRole('button', { name: 'Dịch' })).toBeTruthy()
+  expect(screen.getByRole('button', { name: 'Quản lý dữ liệu' }).textContent).toBe(
+    'Sao lưu & Đồng bộ',
+  )
   expect(screen.getByRole('heading', { name: 'Từ vựng của tôi' })).toBeTruthy()
   expect(screen.getByRole('textbox', { name: 'Từ' })).toHaveProperty(
     'value',
@@ -208,6 +273,13 @@ it('switches the whole interface without losing vocabulary or the active draft a
     }),
   ).toBeTruthy()
   await act(() => i18n.changeLanguage('en'))
+  expect(screen.getByRole('button', { name: 'Dashboard' }).textContent).toBe(
+    'Progress',
+  )
+  expect(screen.getByRole('button', { name: 'Translate' })).toBeTruthy()
+  expect(screen.getByRole('button', { name: 'Data Management' }).textContent).toBe(
+    'Backup & Sync',
+  )
   expect(
     within(tutorial).getByRole('heading', {
       name: "Here's to reaching your goal!",

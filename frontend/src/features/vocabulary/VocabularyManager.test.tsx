@@ -373,7 +373,7 @@ it('updates the import notification after duplicates are deleted and preserves i
   const repo = repository()
   vi.mocked(repo.importEntries).mockResolvedValue([
     { ...emptyInput, id: '1', word: 'bank', english_meaning: 'river side', created_at: '2026-01-01T00:00:00Z', updated_at: '2026-01-01T00:00:00Z' },
-    { ...emptyInput, id: '2', word: 'BANK', english_meaning: 'financial institution', created_at: '2026-01-01T00:00:00Z', updated_at: '2026-01-01T00:00:00Z' },
+    { ...emptyInput, id: '2', word: 'BANK', english_meaning: 'river side', created_at: '2026-01-01T00:00:00Z', updated_at: '2026-01-01T00:00:00Z' },
   ])
   const user = userEvent.setup()
   render(<VocabularyManager repository={repo} />)
@@ -402,7 +402,7 @@ it('detects existing repeated words on every load without an import and regardle
   const repo = repository()
   vi.mocked(repo.list).mockResolvedValue([
     { ...emptyInput, id: '1', word: 'demanding', english_meaning: 'hard', created_at: '2026-01-01T00:00:00Z', updated_at: '2026-01-01T00:00:00Z' },
-    { ...emptyInput, id: '2', word: ' DEMANDING ', english_meaning: 'requires effort', created_at: '2026-01-01T00:00:00Z', updated_at: '2026-01-01T00:00:00Z' },
+    { ...emptyInput, id: '2', word: ' DEMANDING ', english_meaning: ' HARD ', created_at: '2026-01-01T00:00:00Z', updated_at: '2026-01-01T00:00:00Z' },
   ])
   const user = userEvent.setup()
   const first = render(<VocabularyManager repository={repo} />)
@@ -415,9 +415,30 @@ it('detects existing repeated words on every load without an import and regardle
   expect(await screen.findByText('Repeated words in your library:')).toBeTruthy()
 })
 
-it('finds only the chosen repeated word and can return to all words', async () => {
+it('does not flag the same word with a different definition, translation or part of speech', async () => {
   const repo = repository()
-  vi.mocked(repo.list).mockResolvedValue(['bank', ' BANK ', 'banking', 'other'].map((word, index) => ({ ...emptyInput, id: String(index), word, english_meaning: 'bank definition', created_at: '2026-01-01T00:00:00Z', updated_at: '2026-01-01T00:00:00Z' })))
+  vi.mocked(repo.list).mockResolvedValue([
+    { english_meaning: 'financial institution', part_of_speech: 'noun' },
+    { english_meaning: 'river side', part_of_speech: 'noun' },
+    { english_meaning: 'financial institution', part_of_speech: 'verb' },
+    { english_meaning: 'financial institution', part_of_speech: 'noun', vietnamese_meaning: 'ngân hàng' },
+  ].map((input, index) => ({ ...emptyInput, word: 'bank', ...input, id: String(index), created_at: '2026-01-01T00:00:00Z', updated_at: '2026-01-01T00:00:00Z' })))
+  render(<VocabularyManager repository={repo} />)
+  await waitFor(() => expect(screen.getAllByRole('button', { name: 'Word for bank' })).toHaveLength(4))
+  expect(screen.queryByText('Repeated words in your library:')).toBeNull()
+})
+
+it('finds only duplicate entries of the chosen word and can return to all words', async () => {
+  const repo = repository()
+  vi.mocked(repo.list).mockResolvedValue([
+    { word: 'bank' },
+    { word: ' BANK ' },
+    { word: 'banking' },
+    { word: 'other' },
+    { word: 'bank', english_meaning: 'river side' },
+    { word: 'bank', part_of_speech: 'verb' },
+    { word: 'bank', vietnamese_meaning: 'ngân hàng' },
+  ].map((input, index) => ({ ...emptyInput, english_meaning: 'bank definition', ...input, id: String(index), created_at: '2026-01-01T00:00:00Z', updated_at: '2026-01-01T00:00:00Z' })))
   const user = userEvent.setup()
   render(<VocabularyManager repository={repo} />)
   await user.click(await screen.findByRole('button', { name: 'Find duplicates of bank' }))
@@ -425,8 +446,8 @@ it('finds only the chosen repeated word and can return to all words', async () =
   expect(within(table).getAllByRole('button', { name: /^Word for/ })).toHaveLength(2)
   expect(within(table).queryByRole('button', { name: 'Word for banking' })).toBeNull()
   await user.click(screen.getByRole('button', { name: 'Show all words' }))
-  expect(within(table).getAllByRole('button', { name: /^Word for/ })).toHaveLength(4)
+  expect(within(table).getAllByRole('button', { name: /^Word for/ })).toHaveLength(7)
   await user.click(screen.getByRole('button', { name: 'Find duplicates of bank' }))
   await user.clear(screen.getByRole('searchbox', { name: 'Search' }))
-  expect(within(table).getAllByRole('button', { name: /^Word for/ })).toHaveLength(4)
+  expect(within(table).getAllByRole('button', { name: /^Word for/ })).toHaveLength(7)
 })

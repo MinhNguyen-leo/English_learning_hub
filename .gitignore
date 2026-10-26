@@ -6,6 +6,7 @@ dist-ssr/
 coverage/
 .vite/
 .pnpm-store/
+.translate-usage/
 
 # Local configuration and secrets
 .env
