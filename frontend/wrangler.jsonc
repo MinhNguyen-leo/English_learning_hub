@@ -1,0 +1,30 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "english-learning-hub",
+  "main": "worker/index.ts",
+  "compatibility_date": "2026-10-26",
+  "assets": {
+    "directory": "./dist",
+    "binding": "ASSETS",
+    "not_found_handling": "single-page-application",
+    "run_worker_first": ["/api/*"],
+  },
+  "rules": [{ "type": "Text", "globs": ["**/_headers"], "fallthrough": true }],
+  "vars": {
+    "OPENAI_HOST": "https://integrate.api.nvidia.com/v1",
+    "OPENAI_MODEL": "nvidia/nemotron-3-ultra-550b-a55b",
+    "TRANSLATE_DAILY_LIMIT": "20",
+    "TRANSLATE_IP_DAILY_LIMIT": "100",
+    "TRANSLATE_GLOBAL_DAILY_LIMIT": "1000",
+    "TRANSLATE_COOLDOWN_SECONDS": "10",
+    "TRANSLATE_MAX_OUTPUT_TOKENS": "4096",
+  },
+  "durable_objects": {
+    "bindings": [
+      { "name": "TRANSLATION_LIMITS", "class_name": "TranslationLimitsObject" },
+    ],
+  },
+  "migrations": [
+    { "tag": "v1", "new_sqlite_classes": ["TranslationLimitsObject"] },
+  ],
+}

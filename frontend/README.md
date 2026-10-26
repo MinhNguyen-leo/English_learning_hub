@@ -1,6 +1,8 @@
 # Frontend
 
-React + TypeScript + Vite + Tailwind CSS setup only.
+React + TypeScript + Vite + Tailwind CSS, with local vocabulary storage and an optional Cloudflare translation API.
+
+For production NVIDIA translation, follow the [Cloudflare Worker deployment guide](../docs/cloudflare-worker.md).
 
 See the [repository README](../README.md) for prerequisites, environment configuration, development commands, checks and the deployment plan.
 

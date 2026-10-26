@@ -17,15 +17,16 @@ Do not log keys or include them in screenshots, bundles or Git history. Rotate a
 previously exposed key at the provider.
 
 Static production builds do not contain the local translation middleware. Do not
-publish Vite's dev/preview server as an API. A future Cloudflare Worker must use
-Worker Secrets and independently implement request validation, abuse controls and
-security headers. Adding a production backend requires separate approval.
+publish Vite's dev/preview server as an API. The approved Cloudflare Worker uses
+Worker Secrets, shared validation and SQLite Durable Object limits. Follow
+[Cloudflare deployment instructions](cloudflare-worker.md) to deploy the Worker
+and static assets together. A static-only Pages deployment does not include this API.
 
 ## Headers
 
 `frontend/public/_headers` is copied to `dist/_headers` and applied by Cloudflare
-Pages to static responses. Other hosts need equivalent response header rules;
-Pages Functions/Workers must set their own response headers. `vite preview` reuses
+Pages and Workers Assets to static responses. Other hosts need equivalent rules;
+the Worker API reuses the same policy on its own responses. `vite preview` reuses
 the static policy for local verification. Development uses basic headers only,
 because Vite injects scripts/styles and uses WebSocket hot reload.
 

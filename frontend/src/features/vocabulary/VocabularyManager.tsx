@@ -37,21 +37,6 @@ function speakWord(text: string, e?: React.MouseEvent) {
   }
 }
 
-function getPhonetic(word: string): string {
-  const map: Record<string, string> = {
-    ephemeral: '/ɪˈfem.ər.əl/',
-    ubiquitous: '/juːˈbɪk.wə.təs/',
-    pragmatic: '/præɡˈmæt.ɪk/',
-    lucid: '/ˈluː.sɪd/',
-    eloquent: '/ˈel.ə.kwənt/',
-    resilient: '/rɪˈzɪl.jənt/',
-    meticulous: '/məˈtɪk.jə.ləs/',
-    anomaly: '/əˈnɒm.ə.li/',
-    bank: '/bæŋk/',
-    hello: '/həˈloʊ/',
-  }
-  return map[word.toLowerCase()] || `/${word.toLowerCase()}/`
-}
 
 export function VocabularyManager({
   repository,
@@ -971,9 +956,7 @@ export function VocabularyManager({
                                   className="word-meta-bottom-bar"
                                   aria-hidden="true"
                                 >
-                                  <span className="phonetic-text">
-                                    {getPhonetic(val)}
-                                  </span>
+
                                   <span
                                     role="button"
                                     tabIndex={0}

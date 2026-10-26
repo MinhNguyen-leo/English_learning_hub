@@ -7,7 +7,7 @@ import globals from 'globals'
 import tseslint from 'typescript-eslint'
 
 export default defineConfig([
-  globalIgnores(['dist', 'coverage']),
+  globalIgnores(['dist', 'coverage', '.wrangler', '.worker-build']),
   {
     files: ['**/*.{js,ts,tsx}'],
     extends: [js.configs.recommended],
@@ -24,4 +24,8 @@ export default defineConfig([
     languageOptions: { globals: globals.browser },
   },
   prettier,
+  {
+    files: ['worker/**/*.ts'],
+    languageOptions: { globals: globals.worker },
+  },
 ])

@@ -394,15 +394,6 @@
   margin-top: 24px;
 }
 
-.fc-phonetic-pill {
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  font-size: 1.05rem;
-  color: #c1dfff;
-  background: #06204b99;
-  border: 1px solid #8ac4ff3d;
-  padding: 4px 12px;
-  border-radius: 8px;
-}
 
 /* --- Single Unified Flip Button at Card Footer --- */
 .fc-card-footer-action {

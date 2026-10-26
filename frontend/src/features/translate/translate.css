@@ -246,6 +246,11 @@
 .translate-entry button {
   margin-top: 12px;
 }
+.translate-entry .translate-audio {
+  margin-top: 0;
+  flex-shrink: 0;
+  color: var(--primary-dark);
+}
 .translate-page [role='alert'] {
   color: var(--error-text);
   padding-block: 12px;

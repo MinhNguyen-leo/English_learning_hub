@@ -27,6 +27,7 @@ jobs:
       - run: pnpm typecheck
       - run: pnpm test
       - run: pnpm build
+      - run: pnpm worker:check
       - run: pnpm audit --audit-level=high
       - name: Audit root dependencies
         working-directory: .

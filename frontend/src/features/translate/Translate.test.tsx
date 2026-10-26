@@ -48,6 +48,18 @@ it('validates input and rejects malformed or oversized AI entries', () => {
 
 it('calls the API once, saves only on demand and retains the saved entry after reopening storage', async () => {
   await i18n.changeLanguage('en')
+  const speak = vi.fn()
+  const cancel = vi.fn()
+  vi.stubGlobal('speechSynthesis', { speak, cancel })
+  vi.stubGlobal(
+    'SpeechSynthesisUtterance',
+    class {
+      text: string
+      constructor(text: string) {
+        this.text = text
+      }
+    },
+  )
   const name = `translate-test-${crypto.randomUUID()}`
   const db = new ApplicationDatabase(name)
   const repository = new IndexedDBVocabularyRepository(db)
@@ -80,6 +92,18 @@ it('calls the API once, saves only on demand and retains the saved entry after r
     })
     fireEvent.click(screen.getByRole('button', { name: 'Translate & explain' }))
     await screen.findByRole('heading', { name: 'reputation' })
+    expect(speak).not.toHaveBeenCalled()
+    const audio = screen.getByRole('button', { name: 'Listen to reputation' })
+    fireEvent.click(audio)
+    expect(cancel).toHaveBeenCalledTimes(1)
+    expect(speak).toHaveBeenCalledWith(
+      expect.objectContaining({ text: 'reputation', lang: 'en-US', rate: 0.9 }),
+    )
+    speak.mockImplementationOnce(() => {
+      throw new Error('Audio unavailable')
+    })
+    fireEvent.click(audio)
+    expect(screen.getByText(/Unable to play pronunciation/)).toBeTruthy()
     expect(
       fetcher.mock.calls.filter(([url]) => url === '/api/translate'),
     ).toHaveLength(1)
@@ -112,19 +136,17 @@ it('calls the API once, saves only on demand and retains the saved entry after r
 
 it('shows the remaining daily allowance and disables translation when exhausted', async () => {
   const now = Date.now()
-  const fetcher = vi
-    .fn()
-    .mockResolvedValue(
-      new Response(
-        JSON.stringify({
-          limit: 20,
-          remaining: 0,
-          resetAt: now + 3600000,
-          retryAt: now + 3600000,
-          serverNow: now,
-        }),
-      ),
-    )
+  const fetcher = vi.fn().mockResolvedValue(
+    new Response(
+      JSON.stringify({
+        limit: 20,
+        remaining: 0,
+        resetAt: now + 3600000,
+        retryAt: now + 3600000,
+        serverNow: now,
+      }),
+    ),
+  )
   vi.stubGlobal('fetch', fetcher)
   render(
     <Translate

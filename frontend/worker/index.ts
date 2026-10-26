@@ -1,0 +1,225 @@
+import {
+  parseRequest,
+  parseResult,
+  resultSchema,
+} from '../src/features/translate/model.ts'
+import {
+  parseUsage,
+  type TranslationUsage,
+} from '../src/features/translate/usage.ts'
+import { instructions } from '../server/translationPrompt.ts'
+import { positiveSetting, type WorkerEnv } from './env.ts'
+import headerFile from '../public/_headers'
+export { TranslationLimitsObject } from './limits.ts'
+
+const securityHeaders = Object.fromEntries(
+  headerFile
+    .split('\n')
+    .filter((line) => line.startsWith('  '))
+    .map((line) => {
+      const colon = line.indexOf(':')
+      return [line.slice(0, colon).trim(), line.slice(colon + 1).trim()]
+    }),
+)
+
+async function readBounded(request: Request) {
+  if (Number(request.headers.get('Content-Length')) > 40000) return null
+  const reader = request.body?.getReader()
+  if (!reader) return ''
+  const chunks: Uint8Array[] = []
+  let length = 0
+  try {
+    while (true) {
+      const chunk = await reader.read()
+      if (chunk.done) break
+      length += chunk.value.byteLength
+      if (length > 40000) {
+        await reader.cancel()
+        return null
+      }
+      chunks.push(chunk.value)
+    }
+  } finally {
+    reader.releaseLock()
+  }
+  const bytes = new Uint8Array(length)
+  let offset = 0
+  for (const chunk of chunks) {
+    bytes.set(chunk, offset)
+    offset += chunk.length
+  }
+  return new TextDecoder().decode(bytes)
+}
+
+export default {
+  async fetch(request: Request, env: WorkerEnv): Promise<Response> {
+    const url = new URL(request.url)
+    if (!url.pathname.startsWith('/api/')) return env.ASSETS.fetch(request)
+    const headers = new Headers({
+      ...securityHeaders,
+      'Cache-Control': 'no-store',
+    })
+    const reply = (status: number, body: unknown) =>
+      Response.json(body, { status, headers })
+    const usagePath = url.pathname === '/api/translate/usage'
+    if (!usagePath && url.pathname !== '/api/translate')
+      return reply(404, { error: 'API route not found.' })
+    if (
+      (request.headers.has('Origin') &&
+        request.headers.get('Origin') !== url.origin) ||
+      request.headers.get('Sec-Fetch-Site') === 'cross-site'
+    )
+      return reply(403, { error: 'Use this API from the application.' })
+    const method = usagePath ? 'GET' : 'POST'
+    if (request.method !== method) {
+      headers.set('Allow', method)
+      return reply(405, { error: `Use ${method}.` })
+    }
+    // Cloudflare sets this header on ingress; do not trust X-Forwarded-For.
+    const ip = request.headers.get('CF-Connecting-IP')
+    if (!ip)
+      return reply(503, {
+        error: 'Client identity is unavailable. Please retry later.',
+      })
+    let input
+    let endpoint: URL | undefined
+    let maxTokens = 4096
+    if (!usagePath) {
+      if (
+        request.headers
+          .get('Content-Type')
+          ?.split(';')[0]
+          ?.trim()
+          .toLowerCase() !== 'application/json'
+      )
+        return reply(415, { error: 'Use application/json.' })
+      try {
+        const body = await readBounded(request)
+        if (body === null)
+          return reply(413, { error: 'Translation request is too large.' })
+        input = parseRequest(JSON.parse(body))
+      } catch {
+        return reply(400, {
+          error: 'Enter 1–1000 characters and choose a valid translation mode.',
+        })
+      }
+      try {
+        if (!env.OPENAI_API_KEY || !env.OPENAI_MODEL || !env.OPENAI_HOST)
+          throw new Error('Missing provider settings')
+        endpoint = new URL(
+          env.OPENAI_HOST.replace(/\/+$/, '') + '/chat/completions',
+        )
+        // This deployment calls NVIDIA directly; never follow credential-bearing redirects.
+        if (
+          endpoint.origin !== 'https://integrate.api.nvidia.com' ||
+          endpoint.pathname !== '/v1/chat/completions' ||
+          endpoint.username ||
+          endpoint.password ||
+          endpoint.search ||
+          endpoint.hash
+        )
+          throw new Error('Invalid provider endpoint')
+        maxTokens = positiveSetting(env.TRANSLATE_MAX_OUTPUT_TOKENS, 4096)
+      } catch {
+        return reply(503, {
+          error:
+            'Translation is not configured on the server. Please contact the site owner.',
+        })
+      }
+    }
+    let usage: TranslationUsage
+    try {
+      const id = env.TRANSLATION_LIMITS.idFromName('global-v1')
+      const response = await env.TRANSLATION_LIMITS.get(id).fetch(
+        'https://limits.internal/',
+        {
+          method: 'POST',
+          body: JSON.stringify({
+            cookie: request.headers.get('Cookie') ?? '',
+            ip,
+            consume: !usagePath,
+          }),
+        },
+      )
+      if (!response.ok) throw new Error('Storage unavailable')
+      const admission = (await response.json()) as {
+        allowed: boolean
+        usage: unknown
+        cookie: string | null
+      }
+      const parsed = parseUsage(admission.usage)
+      if (!parsed) throw new Error('Invalid usage')
+      usage = parsed
+      if (admission.cookie) headers.set('Set-Cookie', admission.cookie)
+      headers.set('X-Translate-Usage', JSON.stringify(usage))
+      if (usagePath) return reply(200, usage)
+      if (!admission.allowed) {
+        headers.set(
+          'Retry-After',
+          String(
+            Math.max(1, Math.ceil((usage.retryAt - usage.serverNow) / 1000)),
+          ),
+        )
+        return reply(429, {
+          error:
+            usage.remaining === 0
+              ? 'Daily translation limit reached. Please wait until the displayed reset time.'
+              : 'Please wait before translating again.',
+        })
+      }
+    } catch {
+      return reply(503, {
+        error:
+          'Usage limits are unavailable. Translation was not sent. Please retry later.',
+      })
+    }
+    try {
+      const response = await fetch(endpoint!, {
+        method: 'POST',
+        redirect: 'manual',
+        signal: AbortSignal.timeout(60000),
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${env.OPENAI_API_KEY}`,
+        },
+        body: JSON.stringify({
+          model: env.OPENAI_MODEL,
+          stream: false,
+          max_tokens: maxTokens,
+          messages: [
+            {
+              role: 'system',
+              content: `${instructions}\nReturn exactly one JSON object matching this JSON schema. No code fences, commentary or reasoning in the answer:\n${JSON.stringify(resultSchema)}`,
+            },
+            { role: 'user', content: JSON.stringify(input) },
+          ],
+        }),
+      })
+      if (!response.ok)
+        return reply(response.status === 429 ? 429 : 502, {
+          error:
+            response.status === 429
+              ? 'AI provider quota reached. Please retry later.'
+              : 'The AI provider could not translate. Please retry later.',
+        })
+      const data = (await response.json()) as {
+        choices?: { finish_reason?: string; message?: { content?: string } }[]
+      }
+      const choice = data.choices?.[0]
+      if (
+        choice?.finish_reason !== 'stop' ||
+        typeof choice.message?.content !== 'string'
+      )
+        throw new Error('Incomplete response')
+      const text = choice.message.content
+        .trim()
+        .replace(/^```(?:json)?\s*\n([\s\S]*?)\n```$/, '$1')
+      return reply(200, parseResult(JSON.parse(text)))
+    } catch {
+      return reply(502, {
+        error:
+          'Translation failed or timed out. Your input was retained; please retry.',
+      })
+    }
+  },
+} satisfies ExportedHandler<WorkerEnv>

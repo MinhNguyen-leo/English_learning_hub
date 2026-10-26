@@ -34,21 +34,6 @@ function speakWord(text: string, e?: React.MouseEvent) {
   }
 }
 
-function getPhonetic(word: string): string {
-  const map: Record<string, string> = {
-    eloquence: "/'el.ə.kwəns/",
-    ephemeral: '/ɪˈfem.ər.əl/',
-    ubiquitous: '/juːˈbɪk.wə.təs/',
-    pragmatic: '/præɡˈmæt.ɪk/',
-    lucid: '/ˈluː.sɪd/',
-    resilient: '/rɪˈzɪl.jənt/',
-    meticulous: '/məˈtɪk.jə.ləs/',
-    anomaly: '/əˈnɒm.ə.li/',
-    bank: '/bæŋk/',
-    hello: '/həˈloʊ/',
-  }
-  return map[word.toLowerCase()] || `/${word.toLowerCase()}/`
-}
 
 
 
@@ -507,7 +492,7 @@ export function Flashcards({
                 }}
               >
                 <div className="study-card-rotor">
-                  {/* FRONT FACE: Only main word (large, bold, centered) + POS + phonetic + audio */}
+                  {/* FRONT FACE: Only main word (large, bold, centered) + POS + audio */}
                   <div
                     className="study-face study-front"
                     aria-hidden={session.flipped}
@@ -525,7 +510,6 @@ export function Flashcards({
                             {card.part_of_speech.toUpperCase()}
                           </Badge>
                         )}
-                        <span className="fc-phonetic-pill">{getPhonetic(card.word)}</span>
                         <button
                           type="button"
                           className="fc-audio-btn"

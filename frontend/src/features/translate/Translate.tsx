@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
-import { ArrowRight, BookOpen, Languages } from 'lucide-react'
+import { ArrowRight, BookOpen, Languages, Volume2 } from 'lucide-react'
 import { Button } from '../../components/ui'
 import { fields, fieldNames, type VocabularyInput } from '../vocabulary/model'
 import type { VocabularyRepository } from '../vocabulary/repository'
@@ -24,6 +24,27 @@ function Entry({
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const [error, setError] = useState('')
+  const [audioError, setAudioError] = useState(false)
+  const canSpeak =
+    typeof window !== 'undefined' &&
+    'speechSynthesis' in window &&
+    typeof SpeechSynthesisUtterance !== 'undefined'
+  function pronounce() {
+    setAudioError(false)
+    try {
+      window.speechSynthesis.cancel()
+      const utterance = new SpeechSynthesisUtterance(draft.word)
+      utterance.lang = 'en-US'
+      utterance.rate = 0.9
+      utterance.onerror = (event) => {
+        if (event.error !== 'canceled' && event.error !== 'interrupted')
+          setAudioError(true)
+      }
+      window.speechSynthesis.speak(utterance)
+    } catch {
+      setAudioError(true)
+    }
+  }
   async function save() {
     if (saving || saved) return
     setSaving(true)
@@ -46,10 +67,39 @@ function Entry({
     <article className="translate-entry">
       <header className="translate-word-header">
         <h3>{draft.word}</h3>
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          className="translate-audio"
+          aria-label={
+            vi ? `Nghe phát âm ${draft.word}` : `Listen to ${draft.word}`
+          }
+          title={
+            canSpeak
+              ? vi
+                ? 'Nghe phát âm tiếng Anh'
+                : 'Listen to English pronunciation'
+              : vi
+                ? 'Trình duyệt không hỗ trợ phát âm'
+                : 'Speech is unavailable in this browser'
+          }
+          disabled={!canSpeak || !draft.word.trim()}
+          onClick={pronounce}
+        >
+          <Volume2 size={18} aria-hidden="true" />
+        </Button>
         {draft.part_of_speech && (
           <span className="translate-pos">{draft.part_of_speech}</span>
         )}
       </header>
+      {audioError && (
+        <p role="status">
+          {vi
+            ? 'Không thể phát âm lúc này. Vui lòng thử lại hoặc kiểm tra giọng đọc trên thiết bị.'
+            : 'Unable to play pronunciation. Please retry or check the voices on your device.'}
+        </p>
+      )}
       <dl className="translate-definition">
         {fieldNames
           .filter(
