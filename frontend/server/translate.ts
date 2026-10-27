@@ -160,6 +160,10 @@ export function translationMiddleware(
             router
               ? {
                   model,
+                  ...(model === 'nvidia/nemotron-3-ultra-550b-a55b' ||
+                  model === 'nvidia/nvidia/nemotron-3-ultra-550b-a55b'
+                    ? { chat_template_kwargs: { enable_thinking: false } }
+                    : {}),
                   stream: false,
                   max_tokens: positiveSetting(
                     env.TRANSLATE_MAX_OUTPUT_TOKENS,
@@ -190,6 +194,12 @@ export function translationMiddleware(
           ),
         },
       )
+      if (response.status === 504)
+        return reply(504, {
+          code: 'TRANSLATION_TIMEOUT',
+          error:
+            'The translation provider timed out. Your input was retained; please retry later.',
+        })
       if (!response.ok) {
         const status = response.status === 429 ? 429 : 502
         return reply(status, {
@@ -226,10 +236,16 @@ export function translationMiddleware(
           ''
       }
       reply(200, parseResult(JSON.parse(text)))
-    } catch {
+    } catch (error) {
+      if (error instanceof Error && error.name === 'TimeoutError')
+        return reply(504, {
+          code: 'TRANSLATION_TIMEOUT',
+          error:
+            'The translation provider did not finish within 60 seconds. Your input was retained; please retry later.',
+        })
       reply(502, {
         error:
-          'Translation failed or timed out. Your input was retained; please retry.',
+          'Translation failed or returned an invalid result. Your input was retained; please retry.',
       })
     } finally {
       busy = false

@@ -269,3 +269,18 @@ it('rejects incomplete or malformed model output', async () => {
     expect((await translate(runtime({}, 200, content))).status).toBe(502)
   }
 })
+
+it('reports provider gateway timeouts separately and retains charged usage', async () => {
+  const response = await translate(
+    runtime({}, 504, { error: 'private details' }),
+  )
+  expect(response.status).toBe(504)
+  expect(await response.json()).toEqual({
+    code: 'TRANSLATION_TIMEOUT',
+    error:
+      'The translation provider timed out. Your input was retained; please retry later.',
+  })
+  expect(JSON.parse(response.headers.get('X-Translate-Usage')!)).toMatchObject({
+    remaining: 19,
+  })
+})

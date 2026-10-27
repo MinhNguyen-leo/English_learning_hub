@@ -184,6 +184,9 @@ export default {
         },
         body: JSON.stringify({
           model: env.OPENAI_MODEL,
+          ...(env.OPENAI_MODEL === 'nvidia/nemotron-3-ultra-550b-a55b'
+            ? { chat_template_kwargs: { enable_thinking: false } }
+            : {}),
           stream: false,
           max_tokens: maxTokens,
           messages: [
@@ -195,6 +198,12 @@ export default {
           ],
         }),
       })
+      if (response.status === 504)
+        return reply(504, {
+          code: 'TRANSLATION_TIMEOUT',
+          error:
+            'The translation provider timed out. Your input was retained; please retry later.',
+        })
       if (!response.ok)
         return reply(response.status === 429 ? 429 : 502, {
           error:
@@ -215,10 +224,21 @@ export default {
         .trim()
         .replace(/^```(?:json)?\s*\n([\s\S]*?)\n```$/, '$1')
       return reply(200, parseResult(JSON.parse(text)))
-    } catch {
+    } catch (error) {
+      if (error instanceof Error && error.name === 'TimeoutError') {
+        console.warn('Translation provider timeout', {
+          model: env.OPENAI_MODEL,
+          timeoutMs: 60000,
+        })
+        return reply(504, {
+          code: 'TRANSLATION_TIMEOUT',
+          error:
+            'The translation provider did not finish within 60 seconds. Your input was retained; please retry later.',
+        })
+      }
       return reply(502, {
         error:
-          'Translation failed or timed out. Your input was retained; please retry.',
+          'Translation failed or returned an invalid result. Your input was retained; please retry.',
       })
     }
   },

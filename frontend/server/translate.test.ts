@@ -193,6 +193,7 @@ it.each(['router', 'openai'])(
     const body = JSON.parse(String(request?.body))
     expect(body.model).toBe('nvidia/nvidia/nemotron-3-ultra-550b-a55b')
     expect(body.stream).toBe(false)
+    expect(body.chat_template_kwargs).toEqual({ enable_thinking: false })
     expect(body.max_tokens).toBe(4096)
     expect(JSON.parse(body.messages[1].content).text).toBe('reputation')
     upstream.mockResolvedValueOnce(
@@ -210,6 +211,23 @@ it.each(['router', 'openai'])(
     expect((await fetch(url, options)).status).toBe(502)
   },
 )
+
+it('distinguishes a provider timeout from other failures without retrying', async () => {
+  const upstream = vi
+    .fn<typeof fetch>()
+    .mockRejectedValue(
+      new DOMException('Private provider details', 'TimeoutError'),
+    )
+  const url = await start('test-secret', upstream)
+  const response = await fetch(url, options)
+  expect(response.status).toBe(504)
+  expect(await response.json()).toMatchObject({
+    code: 'TRANSLATION_TIMEOUT',
+    error: expect.stringContaining('60 seconds'),
+  })
+  expect(response.headers.get('X-Translate-Usage')).toBeTruthy()
+  expect(upstream).toHaveBeenCalledTimes(1)
+})
 
 it('does not spend allowance for invalid input and fails closed if usage storage fails', async () => {
   const upstream = vi.fn<typeof fetch>()

@@ -206,3 +206,39 @@ it('shows API errors without clearing the input and allows cancellation', async 
   )
   expect(repository.create).not.toHaveBeenCalled()
 })
+
+it('shows a timeout reason and retains input without automatically retrying', async () => {
+  await i18n.changeLanguage('en')
+  const fetcher = vi.fn().mockImplementation((url: string) =>
+    Promise.resolve(
+      url.endsWith('/usage')
+        ? new Response('{}')
+        : new Response(
+            JSON.stringify({
+              code: 'TRANSLATION_TIMEOUT',
+              error:
+                'The translation provider did not finish within 60 seconds. Your input was retained; please retry later.',
+            }),
+            { status: 504 },
+          ),
+    ),
+  )
+  vi.stubGlobal('fetch', fetcher)
+  render(
+    <Translate
+      repository={
+        { create: vi.fn() } as unknown as IndexedDBVocabularyRepository
+      }
+      onSaved={vi.fn()}
+    />,
+  )
+  fireEvent.change(screen.getByLabelText('English text'), {
+    target: { value: 'proof' },
+  })
+  fireEvent.click(screen.getByRole('button', { name: 'Translate & explain' }))
+  expect((await screen.findByRole('alert')).textContent).toContain('60 seconds')
+  expect(screen.getByLabelText('English text')).toHaveProperty('value', 'proof')
+  expect(
+    fetcher.mock.calls.filter(([url]) => url === '/api/translate'),
+  ).toHaveLength(1)
+})
