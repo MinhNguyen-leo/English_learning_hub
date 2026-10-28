@@ -125,6 +125,7 @@ export class IndexedDBBackupRepository implements BackupRepository {
         await this.db.quizSessions.bulkPut(next.quizSessions)
         await this.db.settings.bulkPut(next.settings)
         await this.db.metadata.put({ id: 'legacy-progress-imported', value: 1 })
+        await this.db.metadata.put({ id: 'sample-vocabulary-initialized', value: 2 })
         await this.db.metadata.put({ id: 'generation', value: generation })
       })
     })

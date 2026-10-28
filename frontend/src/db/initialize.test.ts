@@ -7,6 +7,8 @@ import { ReviewProgressDatabase } from '../features/flashcards/progressRepositor
 import { QuizProgressDatabase } from '../features/quiz/progressRepository'
 import { fixture } from '../features/backup/testSupport'
 import { IndexedDBBackupRepository } from '../features/backup/repository'
+import { IndexedDBVocabularyRepository } from '../features/vocabulary/repository'
+import { fieldNames, validate } from '../features/vocabulary/model'
 
 let db: ApplicationDatabase
 let cards: ReviewProgressDatabase
@@ -22,6 +24,32 @@ afterEach(async () => {
   await quiz.delete()
 })
 const names = () => ({ flashcards: cards.name, quiz: quiz.name })
+it('automatically seeds an empty library previously skipped by the old sample initializer', async () => {
+  await db.metadata.bulkPut([
+    { id: 'legacy-progress-imported', value: 1 },
+    { id: 'sample-vocabulary-initialized', value: 1 },
+    { id: 'generation', value: 3 },
+  ])
+  await initializeStorage(db, names())
+  const repository = new IndexedDBVocabularyRepository(db)
+  expect(await repository.list()).toHaveLength(5)
+  for (const row of await repository.list())
+    await repository.delete(row.id, row.updated_at)
+  await initializeStorage(db, names())
+  expect(await repository.list()).toHaveLength(0)
+})
+
+it('adds samples to an empty library whose legacy setup already finished', async () => {
+  await db.metadata.put({ id: 'legacy-progress-imported', value: 1 })
+  await initializeStorage(db, names())
+  const repository = new IndexedDBVocabularyRepository(db)
+  expect(await repository.list()).toHaveLength(5)
+  for (const row of await repository.list())
+    await repository.delete(row.id, row.updated_at)
+  await initializeStorage(db, names())
+  expect(await repository.list()).toHaveLength(0)
+})
+
 it('upgrades the existing v1 library and copies legacy progress once without deleting sources', async () => {
   const original = fixture()
   const legacy = new Dexie(db.name)
@@ -61,6 +89,7 @@ it('rolls back failed migrations and retries without duplicate or lost records',
   }
   db.settings.hook('creating', fail)
   await expect(initializeStorage(db, names())).rejects.toThrow('quota failure')
+  expect(await db.vocabulary.count()).toBe(0)
   expect(await db.flashcardSessions.count()).toBe(0)
   expect(await db.quizSessions.count()).toBe(0)
   expect(await db.metadata.get('legacy-progress-imported')).toBeUndefined()
@@ -80,4 +109,47 @@ it('does not create unused legacy databases for a new installation', async () =>
     flashcardSize: 20,
     quizSize: 10,
   })
+})
+
+it('adds five complete editable samples once, preserves deletions and seeds after local data is cleared', async () => {
+  await Promise.all([
+    initializeStorage(db, names()),
+    initializeStorage(db, names()),
+  ])
+  const repository = new IndexedDBVocabularyRepository(db)
+  const rows = await repository.list()
+  expect(rows).toHaveLength(5)
+  expect(new Set(rows.map((row) => row.id)).size).toBe(5)
+  for (const row of rows) {
+    expect(row.id).toMatch(/^[0-9a-f-]{36}$/)
+    expect(() => validate(row)).not.toThrow()
+    for (const field of fieldNames) expect(row[field].trim()).not.toBe('')
+  }
+  const first = rows[0]!
+  const edited = await repository.update(
+    first.id,
+    { ...first, note: 'My own note' },
+    first.updated_at,
+  )
+  expect(edited.note).toBe('My own note')
+  for (const row of await repository.list())
+    await repository.delete(row.id, row.updated_at)
+  db.close()
+  await db.open()
+  await initializeStorage(db, names())
+  expect(await repository.list()).toEqual([])
+  // This isolated test database represents clearing site data in the browser.
+  await db.delete()
+  await db.open()
+  await initializeStorage(db, names())
+  expect(await repository.list()).toHaveLength(5)
+})
+
+it('does not add samples when an intentionally empty backup was restored before first startup', async () => {
+  const backup = fixture()
+  backup.data.vocabulary = []
+  const repository = new IndexedDBBackupRepository(db)
+  await repository.restore(await repository.preview(backup), 'replace', true)
+  await initializeStorage(db, names())
+  expect(await db.vocabulary.count()).toBe(0)
 })

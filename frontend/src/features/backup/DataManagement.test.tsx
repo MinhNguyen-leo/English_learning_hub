@@ -1,4 +1,5 @@
 // @vitest-environment jsdom
+import 'fake-indexeddb/auto'
 import {
   cleanup,
   render,
@@ -11,6 +12,59 @@ import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import { fixture } from './testSupport'
 import { DataManagement } from './DataManagement'
 import type { BackupRepository } from './repository'
+import { IndexedDBBackupRepository } from './repository'
+import { ApplicationDatabase } from '../../db/ApplicationDatabase'
+import { initializeStorage } from '../../db/initialize'
+import { fieldNames } from '../vocabulary/model'
+
+it('resets through the confirmed UI to five persisted samples and retains them after reopening', async () => {
+  const db = new ApplicationDatabase(`reset-test-${crypto.randomUUID()}`)
+  const repository = new IndexedDBBackupRepository(db)
+  try {
+    const original = fixture()
+    await repository.restore(
+      await repository.preview(original),
+      'replace',
+      true,
+    )
+    const onRestored = vi.fn(async () => {
+      await initializeStorage(db)
+    })
+    render(<DataManagement repository={repository} onRestored={onRestored} />)
+    const user = userEvent.setup()
+    await user.click(
+      screen.getByRole('button', { name: 'Reset Local Database' }),
+    )
+    expect(onRestored).not.toHaveBeenCalled()
+    const dialog = await screen.findByRole('dialog', {
+      name: 'Permanently reset local database?',
+    })
+    await user.click(
+      within(dialog).getByRole('button', { name: 'Yes, Reset Everything' }),
+    )
+    await screen.findByText('Local database has been completely reset.')
+    expect(onRestored).toHaveBeenCalledOnce()
+    db.close()
+    await db.open()
+    await initializeStorage(db)
+    const saved = await repository.export()
+    expect(saved.data.vocabulary).toHaveLength(5)
+    expect(saved.data.vocabulary.map((row) => row.word).sort()).toEqual([
+      'carefully',
+      'confident',
+      'give up',
+      'improve',
+      'opportunity',
+    ])
+    for (const row of saved.data.vocabulary)
+      for (const field of fieldNames) expect(row[field].trim()).not.toBe('')
+    expect(saved.data.flashcardSessions).toEqual([])
+    expect(saved.data.quizSessions).toEqual([])
+  } finally {
+    cleanup()
+    await db.delete()
+  }
+})
 
 beforeEach(() => {
   Object.defineProperty(HTMLDialogElement.prototype, 'showModal', {

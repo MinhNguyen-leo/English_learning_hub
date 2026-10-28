@@ -13,6 +13,7 @@ import type { BackupRepository, RestorePreview } from './repository'
 import { exportXlsx } from '../spreadsheet/xlsx'
 import { downloadXlsx } from '../spreadsheet/browser'
 import { Button, Card, Badge } from '../../components/ui'
+import { createSampleVocabulary } from '../vocabulary/sampleVocabulary'
 import './backup.css'
 
 const labels: Record<keyof BackupData, string> = {
@@ -187,16 +188,16 @@ export function DataManagement({
   function resetDatabase() {
     void run(async () => {
       setResetConfirming(false)
-      const emptyBackup = createBackup({
-        vocabulary: [],
+      const resetBackup = createBackup({
+        vocabulary: createSampleVocabulary(),
         flashcardSessions: [],
         quizSessions: [],
         settings: [],
       })
-      const previewObj = await repository.preview(emptyBackup)
+      const previewObj = await repository.preview(resetBackup)
       await repository.restore(previewObj, 'replace', true)
       await onRestored()
-      setStorage(counts(emptyBackup.data))
+      setStorage(counts(resetBackup.data))
       setStatus('Local database has been completely reset.')
     })
   }
@@ -681,6 +682,7 @@ export function DataManagement({
         }}
       >
         <h2 id="reset-modal-title">{t('Permanently reset local database?')}</h2>
+        <p>{t('After resetting, 5 editable sample words will be added automatically.')}</p>
         <p>
           {t(
             'All {{count}} terms, flashcard marks, quiz records and preferences will be permanently wiped from this browser.',
