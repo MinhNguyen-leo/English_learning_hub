@@ -63,6 +63,15 @@ function runtime(
     })
     .reply(status, JSON.stringify(content))
     .persist()
+  fetchMock
+    .get('https://generativelanguage.googleapis.com')
+    .intercept({
+      path: '/v1beta/openai/chat/completions',
+      method: 'POST',
+      headers: { authorization: 'Bearer test-secret' },
+    })
+    .reply(status, JSON.stringify(content))
+    .persist()
   const instance = new Miniflare({
     modules: true,
     script,
@@ -133,6 +142,18 @@ it('serves validated translations, signed cookies, private headers and cooldowns
   expect(await (await usage(instance, cookie)).json()).toMatchObject({
     remaining: 19,
   })
+})
+
+it('serves translations through the configured Gemini OpenAI endpoint', async () => {
+  const response = await translate(
+    runtime({
+      OPENAI_HOST:
+        'https://generativelanguage.googleapis.com/v1beta/openai',
+      OPENAI_MODEL: 'gemini-3.5-flash-lite',
+    }),
+  )
+  expect(response.status).toBe(200)
+  expect(await response.json()).toEqual(result)
 })
 
 it('atomically enforces global limits across simultaneous devices and IPs', async () => {

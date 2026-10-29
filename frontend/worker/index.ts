@@ -109,10 +109,14 @@ export default {
         endpoint = new URL(
           env.OPENAI_HOST.replace(/\/+$/, '') + '/chat/completions',
         )
-        // This deployment calls NVIDIA directly; never follow credential-bearing redirects.
+        // Only call explicitly supported OpenAI-compatible APIs; never follow
+        // credential-bearing redirects.
+        const providerEndpoint = endpoint.origin + endpoint.pathname
         if (
-          endpoint.origin !== 'https://integrate.api.nvidia.com' ||
-          endpoint.pathname !== '/v1/chat/completions' ||
+          ![
+            'https://integrate.api.nvidia.com/v1/chat/completions',
+            'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions',
+          ].includes(providerEndpoint) ||
           endpoint.username ||
           endpoint.password ||
           endpoint.search ||
