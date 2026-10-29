@@ -12,7 +12,7 @@
   "rules": [{ "type": "Text", "globs": ["**/_headers"], "fallthrough": true }],
   "vars": {
     "OPENAI_HOST": "https://generativelanguage.googleapis.com/v1beta/openai",
-    "OPENAI_MODEL": "gemini-2.5-flash-lite",
+    "OPENAI_MODEL": "gemini-3.5-flash-lite",
     "TRANSLATE_DAILY_LIMIT": "30",
     "TRANSLATE_IP_DAILY_LIMIT": "100",
     "TRANSLATE_GLOBAL_DAILY_LIMIT": "1000",
