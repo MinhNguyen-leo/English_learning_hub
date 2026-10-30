@@ -209,9 +209,38 @@ export default {
             'The translation provider timed out. Your input was retained; please retry later.',
         })
       if (!response.ok) {
+        let providerError: string | undefined
+        try {
+          const data = (await response.json()) as {
+            error?: { status?: unknown; type?: unknown }
+          }
+          const code = data.error?.status ?? data.error?.type
+          if (
+            typeof code === 'string' &&
+            [
+              'INVALID_ARGUMENT',
+              'FAILED_PRECONDITION',
+              'PERMISSION_DENIED',
+              'UNAUTHENTICATED',
+              'NOT_FOUND',
+              'RESOURCE_EXHAUSTED',
+              'INTERNAL',
+              'UNAVAILABLE',
+              'invalid_request_error',
+              'authentication_error',
+              'permission_error',
+              'rate_limit_error',
+              'server_error',
+            ].includes(code)
+          )
+            providerError = code
+        } catch {
+          // The status still identifies the failure if the response is not JSON.
+        }
         console.warn('Translation provider rejected request', {
           status: response.status,
           model: env.OPENAI_MODEL,
+          providerError,
         })
         return reply(response.status === 429 ? 429 : 502, {
           error:
