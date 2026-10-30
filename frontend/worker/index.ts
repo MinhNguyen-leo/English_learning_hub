@@ -210,10 +210,16 @@ export default {
         })
       if (!response.ok) {
         let providerError: string | undefined
+        let errorShape = 'unreadable'
+        let errorHint: string | undefined
         try {
           const data = (await response.json()) as {
-            error?: { status?: unknown; type?: unknown }
+            error?: { status?: unknown; type?: unknown; message?: unknown }
           }
+          errorShape =
+            data?.error && typeof data.error === 'object'
+              ? 'error_object'
+              : 'other_json'
           const code = data.error?.status ?? data.error?.type
           if (
             typeof code === 'string' &&
@@ -234,6 +240,21 @@ export default {
             ].includes(code)
           )
             providerError = code
+          const message = data.error?.message
+          if (typeof message === 'string') {
+            if (
+              /api key.*(?:invalid|expired|not valid)|(?:invalid|expired).*api key/i.test(
+                message,
+              )
+            )
+              errorHint = 'api_key'
+            else if (/billing|payment|credit/i.test(message))
+              errorHint = 'billing'
+            else if (
+              /model.*(?:not found|unsupported|not supported)/i.test(message)
+            )
+              errorHint = 'model'
+          }
         } catch {
           // The status still identifies the failure if the response is not JSON.
         }
@@ -241,6 +262,8 @@ export default {
           status: response.status,
           model: env.OPENAI_MODEL,
           providerError,
+          errorShape,
+          errorHint,
         })
         return reply(response.status === 429 ? 429 : 502, {
           error:
