@@ -24,7 +24,15 @@
       { "name": "TRANSLATION_LIMITS", "class_name": "TranslationLimitsObject" },
     ],
   },
+  "observability": {
+    "logs": {
+      "enabled": true,
+      "invocation_logs": true,
+      "persist": true
+    }
+  },
   "migrations": [
     { "tag": "v1", "new_sqlite_classes": ["TranslationLimitsObject"] },
   ],
+  
 }
