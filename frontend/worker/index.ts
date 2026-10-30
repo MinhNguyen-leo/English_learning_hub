@@ -213,14 +213,19 @@ export default {
         let errorShape = 'unreadable'
         let errorHint: string | undefined
         try {
-          const data = (await response.json()) as {
+          const body: unknown = await response.json()
+          const data = (Array.isArray(body) ? body[0] : body) as {
             error?: { status?: unknown; type?: unknown; message?: unknown }
           }
           errorShape =
             data?.error && typeof data.error === 'object'
-              ? 'error_object'
-              : 'other_json'
-          const code = data.error?.status ?? data.error?.type
+              ? Array.isArray(body)
+                ? 'error_array'
+                : 'error_object'
+              : Array.isArray(body)
+                ? 'other_array'
+                : 'other_json'
+          const code = data?.error?.status ?? data?.error?.type
           if (
             typeof code === 'string' &&
             [
@@ -240,7 +245,7 @@ export default {
             ].includes(code)
           )
             providerError = code
-          const message = data.error?.message
+          const message = data?.error?.message
           if (typeof message === 'string') {
             if (
               /api key.*(?:invalid|expired|not valid)|(?:invalid|expired).*api key/i.test(
