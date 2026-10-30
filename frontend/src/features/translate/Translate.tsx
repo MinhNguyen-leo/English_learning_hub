@@ -220,7 +220,7 @@ export function Translate({
   return (
     <main className="translate-page">
       <header>
-        <p className="eyebrow">ENGLISH → TIẾNG VIỆT</p>
+        <p className="eyebrow">ENGLISH ↔ TIẾNG VIỆT</p>
         <h1>Translate</h1>
         <p>
           {vi
@@ -258,7 +258,9 @@ export function Translate({
               </select>
             </label>
             <label htmlFor="translate-text">
-              {vi ? 'Nội dung tiếng Anh' : 'English text'}
+              {vi
+                ? 'Nội dung tiếng Anh hoặc tiếng Việt'
+                : 'English or Vietnamese text'}
             </label>
             <textarea
               id="translate-text"
@@ -267,7 +269,7 @@ export function Translate({
               rows={4}
               value={text}
               onChange={(event) => setText(event.target.value)}
-              placeholder="reputation / take into account / a passage…"
+              placeholder="reputation / nuôi dưỡng / take into account…"
               aria-describedby="translate-privacy"
             />
             <p className="translate-character-count">{text.length}/1000</p>

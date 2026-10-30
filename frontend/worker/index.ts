@@ -208,13 +208,18 @@ export default {
           error:
             'The translation provider timed out. Your input was retained; please retry later.',
         })
-      if (!response.ok)
+      if (!response.ok) {
+        console.warn('Translation provider rejected request', {
+          status: response.status,
+          model: env.OPENAI_MODEL,
+        })
         return reply(response.status === 429 ? 429 : 502, {
           error:
             response.status === 429
               ? 'AI provider quota reached. Please retry later.'
               : 'The AI provider could not translate. Please retry later.',
         })
+      }
       const data = (await response.json()) as {
         choices?: { finish_reason?: string; message?: { content?: string } }[]
       }

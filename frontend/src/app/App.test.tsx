@@ -68,7 +68,10 @@ it('adds a translation to the already mounted vocabulary tab without translating
     render(<App />)
     await screen.findByRole('heading', { name: 'Learning Dashboard' })
     await user.click(screen.getByRole('button', { name: 'Translate' }))
-    await user.type(screen.getByLabelText('English text'), 'reputation')
+    await user.type(
+      screen.getByLabelText('English or Vietnamese text'),
+      'reputation',
+    )
     await user.click(
       screen.getByRole('button', { name: 'Translate & explain' }),
     )
@@ -250,9 +253,9 @@ it('switches the whole interface without losing vocabulary or the active draft a
     'Tiến độ',
   )
   expect(screen.getByRole('button', { name: 'Dịch' })).toBeTruthy()
-  expect(screen.getByRole('button', { name: 'Quản lý dữ liệu' }).textContent).toBe(
-    'Sao lưu & Đồng bộ',
-  )
+  expect(
+    screen.getByRole('button', { name: 'Quản lý dữ liệu' }).textContent,
+  ).toBe('Sao lưu & Đồng bộ')
   expect(screen.getByRole('heading', { name: 'Từ vựng của tôi' })).toBeTruthy()
   expect(screen.getByRole('textbox', { name: 'Từ' })).toHaveProperty(
     'value',
@@ -277,9 +280,9 @@ it('switches the whole interface without losing vocabulary or the active draft a
     'Progress',
   )
   expect(screen.getByRole('button', { name: 'Translate' })).toBeTruthy()
-  expect(screen.getByRole('button', { name: 'Data Management' }).textContent).toBe(
-    'Backup & Sync',
-  )
+  expect(
+    screen.getByRole('button', { name: 'Data Management' }).textContent,
+  ).toBe('Backup & Sync')
   expect(
     within(tutorial).getByRole('heading', {
       name: "Here's to reaching your goal!",

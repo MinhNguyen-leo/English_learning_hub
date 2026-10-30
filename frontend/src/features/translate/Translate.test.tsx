@@ -46,6 +46,61 @@ it('validates input and rejects malformed or oversized AI entries', () => {
   ).toEqual([entry])
 })
 
+it('submits Vietnamese text and context and displays the English vocabulary result', async () => {
+  await i18n.changeLanguage('en')
+  const db = new ApplicationDatabase(`translate-test-${crypto.randomUUID()}`)
+  const repository = new IndexedDBVocabularyRepository(db)
+  const fetcher = vi.fn((url: string) =>
+    Promise.resolve(
+      new Response(
+        JSON.stringify(
+          url.endsWith('/usage')
+            ? {
+                limit: 20,
+                remaining: 20,
+                resetAt: Date.now() + 86400000,
+                retryAt: Date.now(),
+                serverNow: Date.now(),
+              }
+            : {
+                translation: 'nurture',
+                entries: [
+                  {
+                    ...entry,
+                    word: 'nurture',
+                    vietnamese_meaning: 'nuôi dưỡng',
+                  },
+                ],
+              },
+        ),
+      ),
+    ),
+  )
+  vi.stubGlobal('fetch', fetcher)
+  try {
+    render(<Translate repository={repository} onSaved={vi.fn()} />)
+    fireEvent.change(screen.getByLabelText('English or Vietnamese text'), {
+      target: { value: 'nuôi dưỡng' },
+    })
+    fireEvent.change(screen.getByLabelText('Context (optional)'), {
+      target: { value: 'nuôi dưỡng tài năng của trẻ' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Translate & explain' }))
+    await screen.findByRole('heading', { name: 'nurture' })
+    const options = vi
+      .mocked(fetch)
+      .mock.calls.find(([url]) => url === '/api/translate')?.[1]
+    expect(JSON.parse(String(options?.body))).toEqual({
+      text: 'nuôi dưỡng',
+      context: 'nuôi dưỡng tài năng của trẻ',
+      mode: 'auto',
+    })
+  } finally {
+    cleanup()
+    await db.delete()
+  }
+})
+
 it('calls the API once, saves only on demand and retains the saved entry after reopening storage', async () => {
   await i18n.changeLanguage('en')
   const speak = vi.fn()
@@ -84,7 +139,7 @@ it('calls the API once, saves only on demand and retains the saved entry after r
   const onSaved = vi.fn()
   try {
     render(<Translate repository={repository} onSaved={onSaved} />)
-    fireEvent.change(screen.getByLabelText('English text'), {
+    fireEvent.change(screen.getByLabelText('English or Vietnamese text'), {
       target: { value: 'reputation' },
     })
     fireEvent.change(screen.getByLabelText('Context (optional)'), {
@@ -157,7 +212,7 @@ it('shows the remaining daily allowance and disables translation when exhausted'
     />,
   )
   await screen.findByText('0/20 translations remaining today')
-  fireEvent.change(screen.getByLabelText('English text'), {
+  fireEvent.change(screen.getByLabelText('English or Vietnamese text'), {
     target: { value: 'bank' },
   })
   expect(
@@ -180,14 +235,17 @@ it('shows API errors without clearing the input and allows cancellation', async 
     ),
   )
   render(<Translate repository={repository} onSaved={vi.fn()} />)
-  fireEvent.change(screen.getByLabelText('English text'), {
+  fireEvent.change(screen.getByLabelText('English or Vietnamese text'), {
     target: { value: 'bank' },
   })
   fireEvent.click(screen.getByRole('button', { name: 'Translate & explain' }))
   expect((await screen.findByRole('alert')).textContent).toBe(
     'API quota reached.',
   )
-  expect(screen.getByLabelText('English text')).toHaveProperty('value', 'bank')
+  expect(screen.getByLabelText('English or Vietnamese text')).toHaveProperty(
+    'value',
+    'bank',
+  )
   vi.stubGlobal(
     'fetch',
     vi.fn(
@@ -232,12 +290,15 @@ it('shows a timeout reason and retains input without automatically retrying', as
       onSaved={vi.fn()}
     />,
   )
-  fireEvent.change(screen.getByLabelText('English text'), {
+  fireEvent.change(screen.getByLabelText('English or Vietnamese text'), {
     target: { value: 'proof' },
   })
   fireEvent.click(screen.getByRole('button', { name: 'Translate & explain' }))
   expect((await screen.findByRole('alert')).textContent).toContain('60 seconds')
-  expect(screen.getByLabelText('English text')).toHaveProperty('value', 'proof')
+  expect(screen.getByLabelText('English or Vietnamese text')).toHaveProperty(
+    'value',
+    'proof',
+  )
   expect(
     fetcher.mock.calls.filter(([url]) => url === '/api/translate'),
   ).toHaveLength(1)
