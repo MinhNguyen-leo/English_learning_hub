@@ -212,6 +212,7 @@ export default {
         let providerError: string | undefined
         let errorShape = 'unreadable'
         let errorHint: string | undefined
+        let hasProviderMessage = false
         try {
           const body: unknown = await response.json()
           const data = (Array.isArray(body) ? body[0] : body) as {
@@ -247,6 +248,7 @@ export default {
             providerError = code
           const message = data?.error?.message
           if (typeof message === 'string') {
+            hasProviderMessage = message.length > 0
             if (
               /api key.*(?:invalid|expired|not valid)|(?:invalid|expired).*api key/i.test(
                 message,
@@ -255,6 +257,12 @@ export default {
               errorHint = 'api_key'
             else if (/billing|payment|credit/i.test(message))
               errorHint = 'billing'
+            else if (/region|country|location|geograph/i.test(message))
+              errorHint = 'region'
+            else if (/terms|agreement|consent/i.test(message))
+              errorHint = 'terms'
+            else if (/project|account/i.test(message))
+              errorHint = 'project_or_account'
             else if (
               /model.*(?:not found|unsupported|not supported)/i.test(message)
             )
@@ -269,6 +277,7 @@ export default {
           providerError,
           errorShape,
           errorHint,
+          hasProviderMessage,
         })
         return reply(response.status === 429 ? 429 : 502, {
           error:
