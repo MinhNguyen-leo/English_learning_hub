@@ -213,6 +213,7 @@ export default {
         let errorShape = 'unreadable'
         let errorHint: string | undefined
         let hasProviderMessage = false
+        let regionDetail: string | undefined
         try {
           const body: unknown = await response.json()
           const data = (Array.isArray(body) ? body[0] : body) as {
@@ -250,6 +251,17 @@ export default {
           if (typeof message === 'string') {
             hasProviderMessage = message.length > 0
             if (
+              /free tier/i.test(message) &&
+              /region|country|location/i.test(message)
+            )
+              regionDetail = 'free_tier_region'
+            else if (
+              /(?:location|region|country).*(?:not supported|unavailable|not available)/i.test(
+                message,
+              )
+            )
+              regionDetail = 'location_unsupported'
+            if (
               /api key.*(?:invalid|expired|not valid)|(?:invalid|expired).*api key/i.test(
                 message,
               )
@@ -278,6 +290,7 @@ export default {
           errorShape,
           errorHint,
           hasProviderMessage,
+          regionDetail,
         })
         return reply(response.status === 429 ? 429 : 502, {
           error:
