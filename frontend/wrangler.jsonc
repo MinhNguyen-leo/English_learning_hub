@@ -3,6 +3,7 @@
   "name": "english-learning-hub",
   "main": "worker/index.ts",
   "compatibility_date": "2026-10-26",
+  "compatibility_flags": ["enable_request_signal"],
   "assets": {
     "directory": "./dist",
     "binding": "ASSETS",
@@ -12,7 +13,7 @@
   "rules": [{ "type": "Text", "globs": ["**/_headers"], "fallthrough": true }],
   "vars": {
     "OPENAI_HOST": "https://generativelanguage.googleapis.com/v1beta/openai",
-    "OPENAI_MODEL": "gemini-3.5-flash",
+    "OPENAI_MODEL": "gemini-3.6-flash",
     "TRANSLATE_DAILY_LIMIT": "30",
     "TRANSLATE_IP_DAILY_LIMIT": "100",
     "TRANSLATE_GLOBAL_DAILY_LIMIT": "1000",

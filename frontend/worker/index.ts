@@ -181,13 +181,21 @@ export default {
       const response = await fetch(endpoint!, {
         method: 'POST',
         redirect: 'manual',
-        signal: AbortSignal.timeout(60000),
+        signal: AbortSignal.any([request.signal, AbortSignal.timeout(60000)]),
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${env.OPENAI_API_KEY}`,
         },
         body: JSON.stringify({
           model: env.OPENAI_MODEL,
+          ...(endpoint!.hostname === 'generativelanguage.googleapis.com'
+            ? {
+                response_format: {
+                  type: 'json_schema',
+                  json_schema: { name: 'translation', schema: resultSchema },
+                },
+              }
+            : {}),
           ...(env.OPENAI_MODEL === 'nvidia/nemotron-3-ultra-550b-a55b'
             ? { chat_template_kwargs: { enable_thinking: false } }
             : {}),

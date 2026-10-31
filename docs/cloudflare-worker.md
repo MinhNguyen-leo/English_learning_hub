@@ -2,12 +2,12 @@
 
 Worker `english-learning-hub` phục vụ cả giao diện trong `frontend/dist` và API
 cùng tên miền. Website tiếp tục gọi `/api/translate`, không cần chạy 9Router hay
-máy tác giả. Chỉ văn bản người dùng gửi dịch được chuyển tới NVIDIA; thư viện từ
+máy tác giả. Chỉ văn bản người dùng gửi dịch được chuyển tới Gemini; thư viện từ
 vựng tiếp tục nằm trong IndexedDB.
 
 | API | Hành vi |
 | --- | --- |
-| `POST /api/translate` | Kiểm tra dữ liệu, hạn mức, gọi NVIDIA, xác thực kết quả |
+| `POST /api/translate` | Kiểm tra dữ liệu, hạn mức, gọi Gemini, xác thực kết quả |
 | `GET /api/translate/usage` | Trả số lượt và thời điểm được gửi tiếp |
 
 ## Chuẩn bị và kiểm thử
@@ -26,23 +26,23 @@ corepack pnpm worker:check
 corepack pnpm audit --audit-level=high
 ```
 
-Tests dùng Miniflare/workerd và phản hồi AI giả, không gọi NVIDIA thật. Cần cho
+Tests dùng Miniflare/workerd và phản hồi AI giả, không gọi Gemini thật. Cần cho
 phép tiến trình con và cổng localhost. `worker:check` chỉ đóng gói, không deploy.
 Overrides trong `pnpm-workspace.yaml` vá các phiên bản `undici`/`sharp` bị công cụ
 Cloudflare ghim cứng; xem lại khi nâng công cụ. Không dùng `audit fix --force`.
 
-## Cấu hình NVIDIA và deploy
+## Cấu hình Gemini và deploy
 
 `wrangler.jsonc` chứa các biến máy chủ không bí mật:
 
 ```text
-OPENAI_HOST=https://integrate.api.nvidia.com/v1
-OPENAI_MODEL=nvidia/nemotron-3-ultra-550b-a55b
+OPENAI_HOST=https://generativelanguage.googleapis.com/v1beta/openai
+OPENAI_MODEL=gemini-3.6-flash
 ```
 
-Model ID trực tiếp không có tiền tố định tuyến của 9Router (`nvidia/nvidia/...`).
-Key phải do NVIDIA cấp, không phải key 9Router. Endpoint chỉ chấp nhận NVIDIA
-HTTPS; Worker không theo chuyển hướng để tránh làm lộ key.
+Dùng Gemini API key cho Secret `OPENAI_API_KEY` của Worker. Worker chỉ chấp nhận
+endpoint Gemini hoặc NVIDIA đã được cho phép và không theo chuyển hướng chứa key.
+Gemini dùng structured output; kết quả vẫn được kiểm tra trước khi trả về.
 Kiểm tra quota, điều khoản và chi phí nhà cung cấp trước khi mở cho công chúng;
 code không mua gói hoặc bật thanh toán. `.env.local` không được tự nhập lên cloud.
 
@@ -62,9 +62,9 @@ Wrangler áp dụng migration `v1` tạo SQLite Durable Object và binding
 namespace tùy tiện: namespace mới không giữ bộ đếm cũ. Bộ đếm local không được
 chuyển lên cloud, và IndexedDB của người dùng không bị thay đổi.
 
-Để thử trên máy, sao chép `.dev.vars.example` thành `.dev.vars`, điền key NVIDIA
+Để thử trên máy, sao chép `.dev.vars.example` thành `.dev.vars`, điền Gemini API key
 và chạy `corepack pnpm worker:dev` sau build. File thật bị Git bỏ qua. Những lần
-gửi dịch thực tế vẫn dùng quota NVIDIA.
+gửi dịch thực tế vẫn dùng quota Gemini.
 
 ## Xác minh và phục hồi
 
@@ -82,7 +82,7 @@ GitHub chỉ kiểm tra mã, không tự deploy hoặc lưu khóa production.
 
 ## Hạn mức và dữ liệu
 
-Mặc định: 20 lượt/trình duyệt/ngày, 100 lượt/IP/ngày, 1.000 lượt/toàn website/ngày,
+Cấu hình hiện tại: 30 lượt/trình duyệt/ngày, 100 lượt/IP/ngày, 1.000 lượt/toàn website/ngày,
 chờ 10 giây theo trình duyệt và IP, đặt lại ngày lúc 00:00 UTC+7. Đổi các biến
 `TRANSLATE_*` trong `wrangler.jsonc` rồi deploy để điều chỉnh. Một Durable Object
 chung tăng và kiểm tra các bộ đếm nguyên tử, kể cả nhiều yêu cầu đồng thời.
@@ -101,4 +101,4 @@ Tài liệu chính thức:
 - [Assets và routing](https://developers.cloudflare.com/workers/static-assets/binding/)
 - [SQLite Durable Object](https://developers.cloudflare.com/durable-objects/api/sqlite-storage-api/)
 - [Secrets](https://developers.cloudflare.com/workers/configuration/secrets/)
-- [Model ID NVIDIA](https://build.nvidia.com/nvidia/nemotron-3-ultra-550b-a55b/build)
+- [Gemini OpenAI compatibility](https://ai.google.dev/gemini-api/docs/openai/)
